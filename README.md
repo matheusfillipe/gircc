@@ -2,6 +2,17 @@
 
 Work in progress
 
+# Development
+
+https://docs.godotengine.org/en/stable/tutorials/networking/websocket.html
+
+https://docs.godotengine.org/en/stable/classes/class_streampeertcp.html
+
+https://www.bytesnsprites.com/posts/2021/creating-a-tcp-client-in-godot/
+
+Simple irc client example: https://github.com/matheusfillipe/irc.js/blob/master/irc.js
+
+
 
 # TODO
 
