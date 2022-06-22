@@ -1,27 +1,254 @@
-# TODO implement a basic irc client like from https://github.com/matheusfillipe/irc.js/blob/master/irc.js
-# TODO work with both ws://domain:port and just domain:port urls choosing the backend acordingly and fallback to ws always if on html5 export.
-
 extends Node
-var WSBackend = preload("res://irc/WSBackend.gd")
-var TCPBackend = preload("res://irc/WSBackend.gd")
+
+var WSBackend = load("res://irc/WSBackend.gd")
+var TCPBackend = load("res://irc/TCPBackend.gd")
+
+enum Proto {
+	WS
+	WSS
+	TCP
+	TCPS
+}
+
+var host: String
+var ws_host: String
+var nick: String
+var username: String
+var autojoin_room: String
+var port: int
+var proto: int
+var debug: bool = false
+
+# Either WSBackend ot TCPBackend
+var backend
+
+signal connected
+signal error(message)
+signal message(channel, from_nick, message)
+signal joined(channel)
+signal nick_changed(channel)
+signal parted(channel)
+signal nick_in_use
+signal names(channel, names_list)
+signal closed
 
 
+var init = false
 
 
+################################################################################
+# Creates a new irc client object.
+#
+# _nick: Client irc nickname
+# _username: Client irc username
+#
+# _host: Can be a webscoket address or irc address. The protoccol must be specified example with default ports:
+# irc://irc.example.com:6667
+# ircs://irc.example.com:6697
+# ws://irc.example.com:7666
+# wss://irc.example.com:7669
+#
+# Those default ports will be used when ommited.
+#
+# _ws_host: Optional. Fallback websocket host to use. Useful for html5 compatible exports.
+#
+# _autojoin_room: Optional. Automatically join this room on connect.
+func _init(_nick: String, _username: String, _host: String, _ws_host: String = "", _autojoin_room: String = ""):
+	nick = _nick
+	username = _username
+	host = _host
+	ws_host = _ws_host
+	autojoin_room = _autojoin_room
+
+	# WS fallback for html
+	if OS.get_name() == "HTML5" and len(ws_host) > 0:
+		print("Falling back to websocket backend")
+		host = ws_host
+
+	# Parse uri, load defaults
+	var split_uri = host.split(":")
+	match len(split_uri):
+		1:
+			host = host
+			proto = Proto.TCP
+			port = 6667
+		2:
+			host = split_uri[0]
+			port = int(split_uri[1])
+			proto = Proto.TCP
+		3:
+			host = split_uri[1].trim_prefix("//").trim_prefix("/")
+			port = int(split_uri[2])
+
+			var scheme = split_uri[0]
+			match scheme:
+				"irc":
+					proto = Proto.TCP
+				"ircs":
+					proto = Proto.TCPS
+					# TODO implement tcp over ssl backend support
+					push_error("Protocol not implemented!")
+				"ws":
+					proto = Proto.WS
+				"wss":
+					proto = Proto.WSS
+				_ :
+					push_error("Unrecognized uri")
+
+		_:
+			push_error("Unrecognized uri")
 
 
+	match OS.get_name():
+		"HTML5":
+			if not proto in [Proto.WS, Proto.WSS]:
+				push_error("TCP is not supported in html5 exports. Use websockets or ws_host as a fallback!")
 
-# TODO this is how this will be meant to be used:
-# var client = Client.new()
-# client.host = "irc.dot.org.es:6667"
-# client.wshost = "ws://irc.dot.org.es:7666"
-# client.nick = "testman"  # use same for 3 usernames if not provided
-# client.username = "something"
-# client.connect("connected", self, "_on_client_connected")
-# client.connect("joined", self, "_on_client_joined")
-# client.connect("on_message", self, "_on_client_message")
-# ...
-# client.privmsg(channel, message)
+	# Create backend
+	match proto:
+		Proto.TCP:
+			backend = TCPBackend.new()
+			backend.connect_to_host(host, port)
+
+		Proto.TCPS:
+			pass
+
+		Proto.WS:
+			backend = WSBackend.new()
+			backend.host_uri = "ws://" + host + ":" + str(port)
+
+		Proto.WSS:
+			backend = WSBackend.new()
+			backend.host_uri = "wss://" + host + ":" + str(port)
 
 
-# TODO think about ssl support, might work for websocket but not for tcp backend
+	# Bind and Connect
+	backend.connect("closed", self, "_closed")
+	backend.connect("data_received", self, "_data")
+	backend.connect("error", self, "_error")
+	backend.connect("connected", self, "_connected")
+	add_child(backend)
+
+func _closed():
+	emit_signal("closed")
+
+func _error(err):
+	emit_signal("error", err)
+
+func _connected():
+	quote("nick " + nick)
+	quote("user " + username + " * * :" + username)
+	emit_signal("connected")
+
+	yield(get_tree().create_timer(2, false), "timeout")
+	if len(autojoin_room) > 0:
+		quote("join " + autojoin_room)
+
+
+func _data(data):
+	for msg in data.split("\r\n"):
+		if len(msg) == 0:
+			continue
+
+		if debug:
+			print("<<< ", msg)
+
+		if msg.split(" ")[0] == "PING":
+			quote(msg.replace("PI", "PO"))
+			continue
+
+		irc_parse(msg)
+
+############################
+# Parse irc protocool
+func irc_parse(data):
+	var irc_code = data.split(" ")[1]
+	if not init && irc_code == "376":
+		init = true
+
+	if init:
+		var type = data.split(" ")[1]
+
+		if (type == "PRIVMSG"):
+			var channel = data.split(" ")[2]
+			var from_nick = data.split(":")[1].split("!")[0]
+			var message = data.split(":")[-1]
+			emit_signal("message", channel, from_nick, message)
+
+		elif (type == "JOIN"):
+			var channel = data.split(":")[2].strip_edges()
+			emit_signal("joined", channel)
+
+		elif (type == "NICK"):
+			var new_nick = data.split(":")[2]
+			emit_signal("nick_changed", new_nick)
+
+		elif (type == "PART"):
+			var channel = data.split(" ")[2]
+			emit_signal("parted", channel)
+
+		else:
+			match (irc_code):
+				"433":
+					emit_signal("nick_in_use")
+
+				"353":
+					var channel = data.split("=")[1].split(" ")[1]
+					var names = data.split(":")[-1].split(" ")
+					emit_signal("names", channel, names)
+
+	
+	elif (irc_code == "433"):
+		nick = nick + "_"
+		set_nick(nick)
+
+
+# Send raw message to irc backend server
+func quote(message: String):
+	message = message.replace("\n", "")
+	if debug:
+		print(">>> ", message)
+	backend.send(message)
+
+# Sends a private message or a message to a channel
+func send(nick_or_channel: String, message: String):
+	quote("PRIVMSG %s :%s" % [nick_or_channel, message])
+
+# Changes the nick of the client
+# Capture the result with the "nick_changed" signal
+func set_nick(new_nick: String):
+	quote("nick %s" % [new_nick])
+
+# Joins a channel
+# Capture the result with the "joined" signal
+func join(channel: String):
+	quote("JOIN %s" % [channel])
+
+# Leaves a channel
+# Capture the result with the "parted" signal
+func part(channel: String):
+	quote("PART %s" % [channel])
+
+# Quits the irc server
+func quit(message: String):
+	quote("QUIT :%s" % [message])
+
+# Changes the mode for a specific channel
+# TODO Capture the result with the "mode" signal
+func mode(channel: String, mode: String):
+	quote("MODE %s %s" % [channel, mode])
+
+# Kicks a user from a channel with a message
+# TODO Capture the result with the "kick" signal
+func kick(channel: String, _nick: String, message: String):
+	quote("KICK %s %s :" % [channel, _nick, message])
+
+# Changes the topic of a channel
+# TODO Capture the result with the "topic" signal
+func topic(channel: String, topic: String):
+	quote("TOPIC %s :%s" % [channel, topic])
+
+# Gets a list of names from the current channel
+# Capture the result with the "names" signal
+func names(channel: String):
+	quote("NAMES %s" % [channel])
