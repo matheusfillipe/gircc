@@ -1,3 +1,5 @@
+# TODO implement ssl version of this: https://www.bytesnsprites.com/posts/2021/creating-a-ssl-client-in-godot/
+
 extends Node
 
 var host_uri: String
