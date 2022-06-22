@@ -1,7 +1,7 @@
 extends Node
 
-var WSBackend = load("res://irc/WSBackend.gd")
-var TCPBackend = load("res://irc/TCPBackend.gd")
+const WSBackend = preload("res://irc/WSBackend.gd")
+const TCPBackend = preload("res://irc/TCPBackend.gd")
 
 enum Proto {
 	WS
@@ -9,6 +9,32 @@ enum Proto {
 	TCP
 	TCPS
 }
+
+# Events
+enum {
+	PRIVMSG
+	ACTION
+	JOIN
+	NAMES
+	PART
+	NICK
+	NICK_IN_USE
+}
+
+class Event:
+	var names = PoolStringArray()
+	var message = ""
+	var nick = ""
+	var topic = ""
+	var channel = ""
+	var type: int
+
+	func _init(attrs: Dictionary):
+		if not "type" in attrs:
+			push_error("Event requires type.")
+		for key in attrs:
+			set(key, attrs[key])
+
 
 var host: String
 var ws_host: String
@@ -24,12 +50,7 @@ var backend
 
 signal connected
 signal error(message)
-signal message(channel, from_nick, message)
-signal joined(channel)
-signal nick_changed(channel)
-signal parted(channel)
-signal nick_in_use
-signal names(channel, names_list)
+signal event(_event)
 signal closed
 
 
@@ -140,10 +161,6 @@ func _connected():
 	quote("user " + username + " * * :" + username)
 	emit_signal("connected")
 
-	yield(get_tree().create_timer(2, false), "timeout")
-	if len(autojoin_room) > 0:
-		quote("join " + autojoin_room)
-
 
 func _data(data):
 	for msg in data.split("\r\n"):
@@ -165,39 +182,42 @@ func irc_parse(data):
 	var irc_code = data.split(" ")[1]
 	if not init && irc_code == "376":
 		init = true
+		if len(autojoin_room) > 0:
+			quote("join " + autojoin_room)
 
 	if init:
 		var type = data.split(" ")[1]
 
-		if (type == "PRIVMSG"):
-			var channel = data.split(" ")[2]
-			var from_nick = data.split(":")[1].split("!")[0]
-			var message = data.split(":")[-1]
-			emit_signal("message", channel, from_nick, message)
+		match type:
+			"PRIVMSG":
+				var channel = data.split(" ")[2]
+				var from_nick = data.split(":")[1].split("!")[0]
+				var message = data.split(":")[-1]
+				emit_signal("event", Event.new({"type": PRIVMSG, "channel": channel, "nick": from_nick, "message": message}))
 
-		elif (type == "JOIN"):
-			var channel = data.split(":")[2].strip_edges()
-			emit_signal("joined", channel)
+			"JOIN":
+				var channel = data.split(":")[2].strip_edges()
+				emit_signal("event", Event.new({"type": JOIN, "channel": channel}))
 
-		elif (type == "NICK"):
-			var new_nick = data.split(":")[2]
-			emit_signal("nick_changed", new_nick)
+			"NICK":
+				var new_nick = data.split(":")[2]
+				emit_signal("event", Event.new({"type": NICK, "nick": new_nick}))
 
-		elif (type == "PART"):
-			var channel = data.split(" ")[2]
-			emit_signal("parted", channel)
+			"PART":
+				var channel = data.split(" ")[2]
+				emit_signal("event", Event.new({"type": PART, "channel": channel}))
 
-		else:
-			match (irc_code):
-				"433":
-					emit_signal("nick_in_use")
+			_ :
+				match (irc_code):
+					"433":
+						emit_signal("event", Event.new({"type": NICK_IN_USE}))
 
-				"353":
-					var channel = data.split("=")[1].split(" ")[1]
-					var names = data.split(":")[-1].split(" ")
-					emit_signal("names", channel, names)
+					"353":
+						var channel = data.split("=")[1].split(" ")[1]
+						var names = data.split(":")[-1].split(" ")
+						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "names": names}))
 
-	
+
 	elif (irc_code == "433"):
 		nick = nick + "_"
 		set_nick(nick)

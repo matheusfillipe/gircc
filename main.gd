@@ -4,10 +4,13 @@
 
 extends Control
 
-var IrcClient = load("res://irc/IrcClient.gd")
+const IrcClient = preload("res://irc/IrcClient.gd")
+const Client = preload("res://irc/IrcClient.gd")
 
 # The URL we will connect to
 export var irc_url = "irc.dot.org.es"
+# TODO support ssl
+# export var irc_url = "ircs://irc.dot.org.es:6697"
 export var websocket_url = "wss://irc.dot.org.es:7669"
 export var channel = "#romanian"
 export(bool) var debug = true
@@ -17,17 +20,15 @@ onready var scroll_container = $ScrollContainer
 onready var label = $ScrollContainer/Label
 onready var text_edit = $TextEdit
 
-var client
+var client: IrcClient
 
 func _ready():
 	client = IrcClient.new(nick, nick, irc_url, websocket_url, channel)
 	client.debug = debug
-	client.connect("closed", self, "_closed")
-	client.connect("joined", self, "_joined")
-	client.connect("parted", self, "_parted")
 	client.connect("connected", self, "_connected")
+	client.connect("closed", self, "_closed")
 	client.connect("error", self, "_error")
-	client.connect("message", self, "_on_message")
+	client.connect("event", self, "_on_event")
 	add_child(client)
 
 	text_edit.grab_focus()
@@ -40,15 +41,23 @@ func _connected():
 	print("GUI: irc connected")
 	label.text += "CONNECTED...\n\n\n"
 
-func _joined(_channel):
-	label.text += "JOINED " + _channel + "\n"
-
-func _parted(_channel):
-	label.text += "LEFT " + _channel + "\n"
-
-func _on_message(_channel, from_nick, message):
-	label.text += _channel + " -> " + from_nick + ": " + message + "\n"
-	scrolldown()
+func _on_event(ev):
+	match ev.type:
+		client.PRIVMSG:
+			label.text += ev.channel + " -> " + ev.nick + ": " + ev.message + "\n"
+			scrolldown()
+		client.PART:
+			label.text += "LEFT " + ev.channel + "\n"
+		client.JOIN:
+			label.text += "JOINED " + ev.channel + "\n"
+		client.ACTION:
+			pass
+		client.NAMES:
+			pass
+		client.NICK:
+			pass
+		client.NICK_IN_USE:
+			pass
 
 func _input(ev):
 		if ev.is_action_pressed("send"):
