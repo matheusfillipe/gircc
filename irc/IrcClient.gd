@@ -205,11 +205,11 @@ func irc_parse(data):
 				emit_signal("event", Event.new({"type": JOIN, "channel": channel}))
 
 			"NICK":
-				var new_nick = data.split(":")[2]
+				var new_nick = data.split(":")[2].strip_edges()
 				emit_signal("event", Event.new({"type": NICK, "nick": new_nick}))
 
 			"PART":
-				var channel = data.split(" ")[2]
+				var channel = data.split(" ")[2].strip_edges()
 				emit_signal("event", Event.new({"type": PART, "channel": channel}))
 
 			_ :
