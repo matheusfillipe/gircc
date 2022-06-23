@@ -2,7 +2,7 @@ extends Node
 
 const WSBackend = preload("res://irc/WSBackend.gd")
 const TCPBackend = preload("res://irc/TCPBackend.gd")
-
+const TCPSBackend = preload("res://irc/TCPSBackend.gd")
 enum Proto {
 	WS
 	WSS
@@ -107,8 +107,6 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 					proto = Proto.TCP
 				"ircs":
 					proto = Proto.TCPS
-					# TODO implement tcp over ssl backend support
-					push_error("Protocol not implemented!")
 				"ws":
 					proto = Proto.WS
 				"wss":
@@ -128,11 +126,13 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 	# Create backend
 	match proto:
 		Proto.TCP:
+			print("teeceepee")
 			backend = TCPBackend.new()
 			backend.connect_to_host(host, port)
 
 		Proto.TCPS:
-			pass
+			backend = TCPSBackend.new()
+			backend.connect_to_host(host, port)
 
 		Proto.WS:
 			backend = WSBackend.new()

@@ -10,7 +10,8 @@ signal data_received(data)
 signal error(err)
 
 var _status: int = 0
-var _stream: StreamPeerTCP = StreamPeerTCP.new()
+var _stream: StreamPeerSSL = StreamPeerSSL.new()
+
 
 func _ready() -> void:
 	_status = _stream.get_status()
@@ -20,16 +21,21 @@ func _process(_delta: float) -> void:
 	if new_status != _status:
 		_status = new_status
 		match _status:
-			_stream.STATUS_NONE:
+			_stream.STATUS_DISCONNECTED:
 				emit_signal("closed")
-			_stream.STATUS_CONNECTING:
-				pass
 			_stream.STATUS_CONNECTED:
 				emit_signal("connected")
 			_stream.STATUS_ERROR:
 				emit_signal("error", "TCP connection error")
 
+			_stream.STATUS_HANDSHAKING:
+				print("Performing SSL handshake with host.")
+			_stream.STATUS_ERROR_HOSTNAME_MISMATCH:
+				print("Error with socket stream: Hostname mismatch.")
+				emit_signal("error")
+
 	if _status == _stream.STATUS_CONNECTED:
+		_stream.poll()
 		var available_bytes: int = _stream.get_available_bytes()
 		if available_bytes > 0:
 			var data: Array = _stream.get_partial_data(available_bytes)
@@ -42,9 +48,16 @@ func _process(_delta: float) -> void:
 func connect_to_host(host: String, port: int) -> void:
 	print("TCP Connecting to %s:%d" % [host, port])
 	# Reset status so we can tell if it changes to error again.
-	_status = _stream.STATUS_NONE
-	if _stream.connect_to_host(host, port) != OK:
-		emit_signal("error", "TCP Error connecting to host.")
+	_status = _stream.STATUS_DISCONNECTED
+	var tcp: StreamPeerTCP = StreamPeerTCP.new()
+	var error: int = tcp.connect_to_host(host, port)
+	if error != OK:
+		print("Error connecting to host: ", error)
+		emit_signal("error")
+		return
+	error = _stream.connect_to_stream(tcp)
+	if error != OK:
+		print("Error upgrading connection to SSL: ", error)
 
 func send(data: String) -> bool:
 	if _status != _stream.STATUS_CONNECTED:

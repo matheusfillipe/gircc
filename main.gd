@@ -5,7 +5,6 @@
 extends Control
 
 const IrcClient = preload("res://irc/IrcClient.gd")
-const Client = preload("res://irc/IrcClient.gd")
 
 # The URL we will connect to
 export var irc_url = "irc.dot.org.es"
