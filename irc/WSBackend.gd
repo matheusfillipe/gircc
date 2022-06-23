@@ -27,7 +27,7 @@ func _closed(_was_clean = false):
 	set_process(false)
 
 func send(text: String):
-	_client.get_peer(1).put_packet((text + "\n").to_utf8())
+	_client.get_peer(1).put_packet((text + "\r\n").to_utf8())
 
 func _connected(_proto = ""):
 	emit_signal("connected")

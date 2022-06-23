@@ -179,13 +179,18 @@ func _data(data):
 			quote(msg.replace("PI", "PO"))
 			continue
 
-		irc_parse(msg)
+		irc_process(msg)
 
 ############################
-# Parse irc protocool
-func irc_parse(data):
-	var irc_code = data.split(" ")[1]
-	if not init && irc_code == "376":
+# Parse and process irc protocool
+func irc_process(data):
+	# If message is not a reply ignore for now
+	if len(data.split(" ")) < 2:
+		return
+
+	var reply_code = data.split(" ")[1]
+
+	if not init && reply_code == "376":
 		init = true
 		if len(autojoin_room) > 0:
 			quote("join " + autojoin_room)
@@ -197,7 +202,7 @@ func irc_parse(data):
 			"PRIVMSG":
 				var channel = data.split(" ")[2]
 				var from_nick = data.split(":")[1].split("!")[0]
-				var message = data.split(":")[-1]
+				var message = data.split(":")[2]
 				emit_signal("event", Event.new({"type": PRIVMSG, "channel": channel, "nick": from_nick, "message": message}))
 
 			"JOIN":
@@ -213,7 +218,7 @@ func irc_parse(data):
 				emit_signal("event", Event.new({"type": PART, "channel": channel}))
 
 			_ :
-				match (irc_code):
+				match (reply_code):
 					"433":
 						emit_signal("event", Event.new({"type": NICK_IN_USE}))
 
@@ -223,7 +228,9 @@ func irc_parse(data):
 						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "names": names}))
 
 
-	elif (irc_code == "433"):
+
+	# Nick in use at login
+	elif (reply_code == "433"):
 		nick = nick + "_"
 		set_nick(nick)
 

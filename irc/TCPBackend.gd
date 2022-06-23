@@ -46,7 +46,7 @@ func send(data: String) -> bool:
 	if _status != _stream.STATUS_CONNECTED:
 		emit_signal("error", "TCP Error: Stream is not currently connected.")
 		return false
-	var error: int = _stream.put_data((data + "\n").to_utf8())
+	var error: int = _stream.put_data((data + "\r\n").to_utf8())
 	if error != OK:
 		emit_signal("error", "TCP Error: " + str(error))
 		return false
