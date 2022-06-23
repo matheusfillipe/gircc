@@ -11,6 +11,7 @@ This is a fully features irc client for godot support non encrypted (commonly po
 IRC is the Internet Relay Chat. It is one of the simplest, more awesome and also one of the oldest chatting protocols:
 
 > Internet Relay Chat (IRC) is a text-based chat system for instant messaging. IRC is designed for group communication in discussion forums, called channels, but also allows one-on-one communication... :: 
+
 https://en.wikipedia.org/wiki/Internet_Relay_Chat
 
 Take a look at [this link](https://datatracker.ietf.org/doc/html/rfc1459) to learn more about the protocol and what is supported.
@@ -47,13 +48,13 @@ func _on_event(ev):
 	match ev.type:
 		client.PRIVMSG:
          # Do something with ev.message and ev.channel
-         pass
+            pass
 		client.PART:
          # Do something with ev.channel
-         pass
+            pass
 		client.JOIN:
          # Do something with ev.channel
-         pass
+            pass
 		client.ACTION:
          # Do something with ev.message and ev.channel
 			pass
