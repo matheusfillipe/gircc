@@ -3,6 +3,7 @@ extends Node
 const WSBackend = preload("res://irc/WSBackend.gd")
 const TCPBackend = preload("res://irc/TCPBackend.gd")
 const TCPSBackend = preload("res://irc/TCPSBackend.gd")
+
 enum Proto {
 	WS
 	WSS
@@ -43,6 +44,7 @@ var username: String
 var autojoin_room: String
 var port: int
 var proto: int
+var connected: bool = false
 var debug: bool = false
 
 # Either WSBackend ot TCPBackend
@@ -126,7 +128,6 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 	# Create backend
 	match proto:
 		Proto.TCP:
-			print("teeceepee")
 			backend = TCPBackend.new()
 			backend.connect_to_host(host, port)
 
@@ -157,12 +158,16 @@ func _error(err):
 	emit_signal("error", err)
 
 func _connected():
+	if connected:
+		return
 	quote("nick " + nick)
 	quote("user " + username + " * * :" + username)
 	emit_signal("connected")
+	connected = true
 
 
 func _data(data):
+	_connected()
 	for msg in data.split("\r\n"):
 		if len(msg) == 0:
 			continue

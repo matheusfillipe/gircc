@@ -1,5 +1,3 @@
-# TODO implement ssl version of this: https://www.bytesnsprites.com/posts/2021/creating-a-ssl-client-in-godot/
-
 extends Node
 
 var host_uri: String
@@ -22,8 +20,6 @@ func _process(_delta: float) -> void:
 		match _status:
 			_stream.STATUS_NONE:
 				emit_signal("closed")
-			_stream.STATUS_CONNECTING:
-				pass
 			_stream.STATUS_CONNECTED:
 				emit_signal("connected")
 			_stream.STATUS_ERROR:
@@ -37,7 +33,7 @@ func _process(_delta: float) -> void:
 			if data[0] != OK:
 				emit_signal("error", "TCP Error getting data from stream: " + str(data[0]))
 			else:
-				emit_signal("data_received", data[0].get_string_from_utf8())
+				emit_signal("data_received", data[1].get_string_from_utf8())
 
 func connect_to_host(host: String, port: int) -> void:
 	print("TCP Connecting to %s:%d" % [host, port])

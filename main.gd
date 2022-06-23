@@ -7,9 +7,8 @@ extends Control
 const IrcClient = preload("res://irc/IrcClient.gd")
 
 # The URL we will connect to
-export var irc_url = "irc.dot.org.es"
-# TODO support ssl
-# export var irc_url = "ircs://irc.dot.org.es:6697"
+# export var irc_url = "irc.dot.org.es"
+export var irc_url = "ircs://irc.dot.org.es:6697"
 export var websocket_url = "wss://irc.dot.org.es:7669"
 export var channel = "#romanian"
 export(bool) var debug = true
