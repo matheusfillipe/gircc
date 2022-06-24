@@ -59,6 +59,13 @@ signal closed
 var init = false
 
 
+func get_type(var_name: String) -> int:
+	var constant_map: Dictionary = get_script().get_script_constant_map()
+	if var_name in constant_map:
+		return constant_map[var_name]
+	return -1
+
+
 ################################################################################
 # Creates a new irc client object.
 #
@@ -183,12 +190,18 @@ func _data(data):
 
 ############################
 # Parse and process irc protocool
-func irc_process(data):
-	# If message is not a reply ignore for now
-	if len(data.split(" ")) < 2:
+func irc_process(msg):
+	if len(msg) < 0:
 		return
 
-	var reply_code = data.split(" ")[1]
+	msg = msg.strip_edges()
+	var args = msg.split(" ")
+
+	# If message is not a reply ignore for now
+	if not args[0].begins_with(":") or len(msg.split(" ")) < 2:
+		return
+
+	var reply_code = msg.split(" ")[1]
 
 	if not init && reply_code == "376":
 		init = true
@@ -196,26 +209,33 @@ func irc_process(data):
 			quote("join " + autojoin_room)
 
 	if init:
-		var type = data.split(" ")[1]
+		var type = args[1]
+		var long_param = ""
 
+		var has_long_param
+		for arg in Array(args).slice(1, len(args) - 1):
+			if not has_long_param and arg.begins_with(":"):
+				has_long_param = true
+				long_param += arg.trim_prefix(":")
+			elif has_long_param:
+				long_param += " " + arg
+
+		var evtype = get_type(type)
 		match type:
 			"PRIVMSG":
-				var channel = data.split(" ")[2]
-				var from_nick = data.split(":")[1].split("!")[0]
-				var message = data.split(":")[2]
-				emit_signal("event", Event.new({"type": PRIVMSG, "channel": channel, "nick": from_nick, "message": message}))
+				var channel = args[2]
+				var from_nick = msg.split(":")[1].split("!")[0]
+				var message = long_param
+				emit_signal("event", Event.new({"type": evtype, "channel": channel, "nick": from_nick, "message": message}))
 
 			"JOIN":
-				var channel = data.split(":")[2].strip_edges()
-				emit_signal("event", Event.new({"type": JOIN, "channel": channel}))
+				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
 
 			"NICK":
-				var new_nick = data.split(":")[2].strip_edges()
-				emit_signal("event", Event.new({"type": NICK, "nick": new_nick}))
+				emit_signal("event", Event.new({"type": evtype, "nick": long_param}))
 
 			"PART":
-				var channel = data.split(" ")[2].strip_edges()
-				emit_signal("event", Event.new({"type": PART, "channel": channel}))
+				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
 
 			_ :
 				match (reply_code):
@@ -223,8 +243,8 @@ func irc_process(data):
 						emit_signal("event", Event.new({"type": NICK_IN_USE}))
 
 					"353":
-						var channel = data.split("=")[1].split(" ")[1]
-						var names = data.split(":")[-1].split(" ")
+						var channel = msg.split("=")[1].split(" ")[1]
+						var names = long_param.split(" ")
 						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "names": names}))
 
 
