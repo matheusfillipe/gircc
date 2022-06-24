@@ -347,3 +347,12 @@ func topic(channel: String, topic: String):
 # Capture the result with the "names" signal
 func names(channel: String):
 	quote("NAMES %s" % [channel])
+
+
+# Send a custom ctcp command private message
+func ctcp(nick_or_channel: String, command: String):
+	quote("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape % [nick_or_channel, command])
+
+# /me action
+func me(nick_or_channel: String, message: String):
+	ctcp(nick_or_channel, "ACTION " + message)
