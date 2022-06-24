@@ -37,6 +37,9 @@ class Event:
 			set(key, attrs[key])
 
 
+const ctcp_escape = '\u0001'
+
+
 var host: String
 var ws_host: String
 var nick: String
@@ -209,10 +212,11 @@ func irc_process(msg):
 			quote("join " + autojoin_room)
 
 	if init:
-		var type = args[1]
+		var evtype = get_type(args[1].to_upper())
+		var from = args[0].trim_prefix(":")
+		var from_nick = from.split("!")[0]
 		var long_param = ""
-
-		var has_long_param
+		var has_long_param = false
 		for arg in Array(args).slice(1, len(args) - 1):
 			if not has_long_param and arg.begins_with(":"):
 				has_long_param = true
@@ -220,22 +224,61 @@ func irc_process(msg):
 			elif has_long_param:
 				long_param += " " + arg
 
-		var evtype = get_type(type)
-		match type:
-			"PRIVMSG":
+		var ctcp_command: String = ""
+		var ctcp_args: Array = []
+		var has_ctcp = false
+		var ctcp_type: int
+		if has_long_param and long_param.begins_with(ctcp_escape):
+			for c in long_param.trim_prefix(ctcp_escape):
+				if c == ctcp_escape:
+					break
+				ctcp_command += c
+			ctcp_args = Array(ctcp_command.split(" "))
+			ctcp_type = get_type(ctcp_args[0])
+			has_ctcp = true
+
+		match evtype:
+			PRIVMSG:
 				var channel = args[2]
-				var from_nick = msg.split(":")[1].split("!")[0]
-				var message = long_param
-				emit_signal("event", Event.new({"type": evtype, "channel": channel, "nick": from_nick, "message": message}))
+				if has_ctcp:
+					match ctcp_type:
+						ACTION:
+							emit_signal("event", Event.new({
+								"type": ctcp_type,
+								"channel": channel,
+								"nick": from_nick,
+								"message": ctcp_command.trim_prefix(ctcp_args[0] + " ")
+								})
+							)
+				else:
+					emit_signal("event", Event.new({
+						"type": evtype,
+						"channel": channel,
+						"nick": from_nick,
+						"message": long_param
+						})
+					)
 
-			"JOIN":
-				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
+			JOIN:
+				emit_signal("event", Event.new({
+					"type": evtype,
+					"channel": long_param
+					})
+				)
 
-			"NICK":
-				emit_signal("event", Event.new({"type": evtype, "nick": long_param}))
+			NICK:
+				emit_signal("event", Event.new({
+					"type": evtype,
+					"nick": long_param
+					})
+				)
 
-			"PART":
-				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
+			PART:
+				emit_signal("event", Event.new({
+					"type": evtype,
+					"channel": long_param
+					})
+				)
 
 			_ :
 				match (reply_code):

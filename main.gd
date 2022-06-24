@@ -49,7 +49,7 @@ func _on_event(ev):
 		client.JOIN:
 			label.text += "JOINED " + ev.channel + "\n"
 		client.ACTION:
-			pass
+			label.text += ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*\n"
 		client.NAMES:
 			pass
 		client.NICK:
