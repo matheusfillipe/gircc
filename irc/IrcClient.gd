@@ -351,7 +351,7 @@ func names(channel: String):
 
 # Send a custom ctcp command private message
 func ctcp(nick_or_channel: String, command: String):
-	quote("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape % [nick_or_channel, command])
+	quote(("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape) % [nick_or_channel, command])
 
 # /me action
 func me(nick_or_channel: String, message: String):

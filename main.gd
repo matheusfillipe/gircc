@@ -64,6 +64,16 @@ func _input(ev):
 func _on_Send_pressed():
 	for text in text_edit.text.split("\n"):
 		if len(text) > 0:
+			if text.begins_with('/'):
+				match text.trim_prefix('/').split(' ')[0].to_upper():
+					"CLEAR":
+						label.text = ''
+					"ME":
+						client.me(channel, text.lstrip(text.split(' ')[0]+' '))
+					"PART":
+						client.part(channel)
+				text_edit.text = ""
+				return
 			client.send(channel, text)
 			label.text += channel + " -> " + nick + ": " + text + "\n"
 	text_edit.text = ""
