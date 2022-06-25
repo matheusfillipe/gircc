@@ -337,17 +337,17 @@ func send(nick_or_channel: String, message: String):
 	quote("PRIVMSG %s :%s" % [nick_or_channel, message])
 
 # Changes the nick of the client
-# Capture the result with the "nick_changed" signal
+# Capture the result with the "NICK" event
 func set_nick(new_nick: String):
 	quote("nick %s" % [new_nick])
 
 # Joins a channel
-# Capture the result with the "joined" signal
+# Capture the result with the "JOIN" event
 func join(channel: String):
 	quote("JOIN %s" % [channel])
 
 # Leaves a channel
-# Capture the result with the "parted" signal
+# Capture the result with the "PART" event
 func part(channel: String):
 	quote("PART %s" % [channel])
 
@@ -356,21 +356,22 @@ func quit(message: String):
 	quote("QUIT %s" % [message])
 
 # Changes the mode for a specific channel
-# TODO Capture the result with the "mode" signal
-func mode(channel: String, mode: String, nick: String):
-	quote("MODE %s %s %s" % [channel, mode, nick])
+# TODO Capture the result with the "MODE" event
+func mode(channel: String, mode: String, _nick: String):
+	quote("MODE %s %s %s" % [channel, mode, _nick])
 
 # Kicks a user from a channel with a message
-# TODO Capture the result with the "kick" signal
+# TODO Capture the result with the "KICK" event
 func kick(channel: String, _nick: String, message: String):
 	quote("KICK %s %s :" % [channel, _nick, message])
 
 # Changes the topic of a channel
+# Capture the result with the "JOIN" event
 func topic(channel: String, topic: String):
 	quote("TOPIC %s :%s" % [channel, topic])
 
 # Gets a list of names from the current channel
-# Capture the result with the "names" signal
+# Capture the result with the "NAMES" event
 func names(channel: String):
 	quote("NAMES %s" % [channel])
 
@@ -384,5 +385,6 @@ func me(nick_or_channel: String, message: String):
 	ctcp(nick_or_channel, "ACTION " + message)
 
 # Adds op rights to a nick. Shorthand to /mode channel +o nick
+# TODO Capture the result with the "MODE" event
 func op(channel: String, _nick: String):
 	mode(channel, '+o', _nick)

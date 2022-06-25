@@ -57,10 +57,11 @@ const CMD_HELP = {
 func _ready():
 	client = IrcClient.new(nick, nick, irc_url, websocket_url, channel)
 	client.debug = debug
-	client.connect("connected", self, "_connected")
-	client.connect("closed", self, "_closed")
-	client.connect("error", self, "_error")
-	client.connect("event", self, "_on_event")
+	var _n
+	_n = client.connect("connected", self, "_connected")
+	_n = client.connect("closed", self, "_closed")
+	_n = client.connect("error", self, "_error")
+	_n = client.connect("event", self, "_on_event")
 	add_child(client)
 
 	text_edit.grab_focus()
