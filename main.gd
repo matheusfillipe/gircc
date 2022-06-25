@@ -70,7 +70,7 @@ func _on_Send_pressed():
 				var command = text.split(' ')[0]
 				var args = get_args(text.split(' ')[0], text)
 				var joinedargs = join_args(args)
-				print(command)
+				print(joinedargs)
 				match capscommand:
 					"CLEAR":
 						label.text = ''
@@ -83,9 +83,12 @@ func _on_Send_pressed():
 					"JOIN":
 						client.join(args[0])
 					"TOPIC":
+						print(joinedargs)
 						client.topic(channel,joinedargs)
 					"QUIT":
 						client.quit(joinedargs)
+					"OP":
+						client.op(channel, joinedargs)
 				text_edit.text = ""
 				return
 			client.send(channel, text)
@@ -93,10 +96,10 @@ func _on_Send_pressed():
 	text_edit.text = ""
 	scrolldown()
 func get_args(command, string):
-	var newstring = string.trim_prefix(command)
+	var newstring = string.trim_prefix(command+" ")
 	print(newstring)
 	var array = []
-	for args in newstring.lstrip(newstring.split(' ')[0]+' '):
+	for args in newstring:
 		array.append(args)
 	return array
 func join_args(args):

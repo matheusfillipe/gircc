@@ -330,8 +330,8 @@ func quit(message: String):
 
 # Changes the mode for a specific channel
 # TODO Capture the result with the "mode" signal
-func mode(channel: String, mode: String):
-	quote("MODE %s %s" % [channel, mode])
+func mode(channel: String, mode: String, nick: String):
+	quote("MODE %s %s %s" % [channel, mode, nick])
 
 # Kicks a user from a channel with a message
 # TODO Capture the result with the "kick" signal
@@ -356,3 +356,6 @@ func ctcp(nick_or_channel: String, command: String):
 # /me action
 func me(nick_or_channel: String, message: String):
 	ctcp(nick_or_channel, "ACTION " + message)
+
+func op(channel: String, nick: String):
+	mode(channel, '+o', nick)
