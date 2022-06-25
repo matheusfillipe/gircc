@@ -326,7 +326,7 @@ func part(channel: String):
 
 # Quits the irc server
 func quit(message: String):
-	quote("QUIT :%s" % [message])
+	quote("QUIT %s" % [message])
 
 # Changes the mode for a specific channel
 # TODO Capture the result with the "mode" signal
