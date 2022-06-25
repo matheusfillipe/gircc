@@ -49,7 +49,8 @@ const CMD_HELP = {
 	Commands.MSG    : "Usage: /msg <nick> message",
 	Commands.QUIT	: "Usage: /quit message",
 	Commands.OP     : "Usage: /op nick",
-	Commands.NAMES     : "Usage: /names [channel]",
+	Commands.NAMES  : "Usage: /names [channel]",
+	Commands.QUOTE  : "Usage: /quote raw_irc_command",
 }
 
 
