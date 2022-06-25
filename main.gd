@@ -118,7 +118,8 @@ func help(cmd, suffix=""):
 	label.text += suffix + "/" + cmd + ": " + help_msg + "\n"
 	return
 
-static func join_from(args, start_index=0):
+# Join an array from strings starting from the given start_index
+static func join_from(args: Array, start_index=0) -> String:
 	var string = ""
 	var i = -1
 
@@ -128,6 +129,16 @@ static func join_from(args, start_index=0):
 			continue
 		string += word + " "
 	return string
+
+# Given a prefix will find if there is any or multiple corresponding commands with that prefix
+func find_commands_from_prefix(prefix: String) -> PoolStringArray:
+	prefix = prefix.to_upper()
+	var can_be = PoolStringArray()
+	for cmd in Commands.keys():
+		if not cmd.to_upper().begins_with(prefix):
+			continue
+		can_be.append(cmd)
+	return can_be
 
 func _command(text):
 	var whitespace_split = text.split(" ")
@@ -140,7 +151,16 @@ func _command(text):
 	var arglen = len(args)
 	command = command.to_upper()
 
-	match Commands.keys().find(command):
+	# Accept shortened prefixes for each command
+	var can_be = find_commands_from_prefix(command)
+	var cmd_id = -1
+	if len(can_be) == 1:
+		cmd_id = Commands.keys().find(can_be[0])
+	elif len(can_be) > 1:
+		label.text += " -> /" + command + " could be multiple commands: " + str(can_be) + "\n"
+		return
+
+	match cmd_id:
 		Commands.HELP:
 			if arglen > 0:
 				help(args[0])
