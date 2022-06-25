@@ -18,7 +18,8 @@ onready var scroll_container = $ScrollContainer
 onready var label = $ScrollContainer/Label
 onready var text_edit = $TextEdit
 
-var command_prefix = "/"
+
+var client: IrcClient
 
 enum Commands {
 	HELP
@@ -30,7 +31,12 @@ enum Commands {
 	TOPIC
 	MSG
 	QUIT
+	OP
+	NAMES
+	QUOTE
 }
+
+const command_prefix = "/"
 
 const CMD_HELP = {
 	Commands.HELP	: "Usage: /help command",
@@ -40,11 +46,13 @@ const CMD_HELP = {
 	Commands.NICK	: "Usage: /nick <new nickname.",
 	Commands.JOIN	: "Usage: /join <channel>",
 	Commands.TOPIC	: "Usage: /topic topic",
-	Commands.MSG		: "Usage: /msg <nick> message",
+	Commands.MSG    : "Usage: /msg <nick> message",
 	Commands.QUIT	: "Usage: /quit message",
+	Commands.OP     : "Usage: /op nick",
+	Commands.NAMES     : "Usage: /names [channel]",
 }
 
-var client: IrcClient
+
 
 func _ready():
 	client = IrcClient.new(nick, nick, irc_url, websocket_url, channel)
@@ -84,12 +92,31 @@ func _on_event(ev):
 			label.text += "You are now known as " + ev.nick + "\n"
 		client.NICK_IN_USE:
 			label.text += "That nickname is already in use!\n"
+		client.TOPIC:
+			var pre = ""
+			if ev.nick:
+				pre = "Topic set by " + ev.nick
+			else:
+				pre = "TOPIC"
+			label.text += pre + ": \"" + ev.message + "\"\n"
+		client.ERR_CHANPRIVSNEEDED:
+			label.text += " -> Error: " + ev.message + "\n"
+
 
 	scrolldown()
 
 func _input(ev):
 		if ev.is_action_pressed("send"):
 			_on_Send_pressed()
+
+func help(cmd, suffix=""):
+	cmd = cmd.to_upper()
+	if not cmd in Commands.keys():
+		label.text += suffix + "No help for: /" + cmd + "\n"
+		return
+	var help_msg = CMD_HELP[Commands.keys().find(cmd)]
+	label.text += suffix + "/" + cmd + ": " + help_msg + "\n"
+	return
 
 static func join_from(args, start_index=0):
 	var string = ""
@@ -106,20 +133,17 @@ func _command(text):
 	var whitespace_split = text.split(" ")
 	var command = whitespace_split[0].trim_prefix(command_prefix)
 	var args = PoolStringArray()
+
 	if len(whitespace_split) > 1:
 		args = text.trim_prefix(command_prefix + command + " ").split(" ")
+
+	var arglen = len(args)
 	command = command.to_upper()
 
 	match Commands.keys().find(command):
 		Commands.HELP:
-			if len(args) > 0:
-				var cmd = args[0].to_upper()
-				if not cmd in Commands.keys():
-					label.text += "Unrecognized command: /" + args[0] + "\n"
-					return
-				var help_msg = CMD_HELP[Commands.keys().find(cmd)]
-				label.text += "/" + cmd + ": " + help_msg + "\n"
-				return
+			if arglen > 0:
+				help(args[0])
 
 			for cmd in Commands.keys():
 				label.text += command_prefix + cmd + "\n"
@@ -127,72 +151,43 @@ func _command(text):
 
 		Commands.CLEAR:
 			label.text = ""
+		Commands.QUOTE:
+			client.quote(join_from(args))
 		Commands.ME:
 			client.me(channel, join_from(args))
 		Commands.PART:
 			client.part(channel)
+		Commands.TOPIC:
+			match arglen:
+				0:
+					client.quote("TOPIC " + channel)
+				_:
+					client.topic(channel, join_from(args))
 		Commands.NICK:
 			client.set_nick(args[0])
 			nick = args[0]
 		Commands.JOIN:
 			client.join(args[0])
 			channel = args[0]
-		Commands.TOPIC:
-			client.topic(channel, join_from(args))
 		Commands.MSG:
 			client.send(args[0], join_from(args, 1))
 		Commands.QUIT:
 			client.quit(join_from(args))
+		Commands.OP:
+			client.op(channel, args[0])
+		Commands.NAMES:
+			match arglen:
+				0:
+					client.names(channel)
+				_:
+					client.names(args[0] or channel)
+
 		_:
 			label.text += "Unrecognized command: /" + command + "\n"
 
 
 func _on_Send_pressed():
 	for text in text_edit.text.split("\n"):
-		if len(text) > 0:
-			if text.begins_with('/'):
-				
-				var capscommand = text.split(' ')[0].to_upper().trim_prefix('/')
-				var command = text.split(' ')[0]
-				var args = get_args(text.split(' ')[0], text)
-				var joinedargs = join_args(args)
-				print(joinedargs)
-				match capscommand:
-					"CLEAR":
-						label.text = ''
-					"ME":
-						client.me(channel, joinedargs)
-					"PART":
-						client.part(channel)
-					"NICK":
-						client.set_nick(args[0])
-					"JOIN":
-						client.join(args[0])
-					"TOPIC":
-						print(joinedargs)
-						client.topic(channel,joinedargs)
-					"QUIT":
-						client.quit(joinedargs)
-					"OP":
-						client.op(channel, joinedargs)
-				text_edit.text = ""
-				return
-			client.send(channel, text)
-			label.text += channel + " -> " + nick + ": " + text + "\n"
-	text_edit.text = ""
-	scrolldown()
-func get_args(command, string):
-	var newstring = string.trim_prefix(command+" ")
-	print(newstring)
-	var array = []
-	for args in newstring:
-		array.append(args)
-	return array
-func join_args(args):
-	var string = ''
-	for i in args:
-		string += i
-	return string
 		if len(text) <= 0:
 			continue
 

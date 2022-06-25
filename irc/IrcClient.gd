@@ -20,6 +20,8 @@ enum {
 	PART
 	NICK
 	NICK_IN_USE
+	TOPIC
+	ERR_CHANPRIVSNEEDED
 }
 
 class Event:
@@ -280,6 +282,15 @@ func irc_process(msg):
 					})
 				)
 
+			TOPIC:
+				emit_signal("event", Event.new({
+					"type": evtype,
+					"nick": from_nick,
+					"channel": args[2],
+					"message": long_param,
+					})
+				)
+
 			_ :
 				match (reply_code):
 					"433":
@@ -289,6 +300,20 @@ func irc_process(msg):
 						var channel = msg.split("=")[1].split(" ")[1]
 						var names = long_param.split(" ")
 						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "names": names}))
+
+					"332":
+						emit_signal("event", Event.new({
+							"type": TOPIC,
+							"nick": "",
+							"channel": args[3],
+							"message": long_param,
+							}))
+
+					"482":
+						emit_signal("event", Event.new({
+							"type": ERR_CHANPRIVSNEEDED,
+							"message": long_param,
+							}))
 
 
 
@@ -339,7 +364,6 @@ func kick(channel: String, _nick: String, message: String):
 	quote("KICK %s %s :" % [channel, _nick, message])
 
 # Changes the topic of a channel
-# TODO Capture the result with the "topic" signal
 func topic(channel: String, topic: String):
 	quote("TOPIC %s :%s" % [channel, topic])
 
@@ -357,5 +381,6 @@ func ctcp(nick_or_channel: String, command: String):
 func me(nick_or_channel: String, message: String):
 	ctcp(nick_or_channel, "ACTION " + message)
 
-func op(channel: String, nick: String):
-	mode(channel, '+o', nick)
+# Adds op rights to a nick. Shorthand to /mode channel +o nick
+func op(channel: String, _nick: String):
+	mode(channel, '+o', _nick)
