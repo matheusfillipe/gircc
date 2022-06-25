@@ -5,6 +5,7 @@
 extends Control
 
 const IrcClient = preload("res://irc/IrcClient.gd")
+const StringUtils = preload("res://irc/StringUtils.gd")
 
 # The URL we will connect to
 # export var irc_url = "irc.dot.org.es"
@@ -34,6 +35,7 @@ enum Commands {
 	OP
 	NAMES
 	QUOTE
+	LIST
 }
 
 const command_prefix = "/"
@@ -49,8 +51,9 @@ const CMD_HELP = {
 	Commands.MSG    : "Usage: /msg <nick> message",
 	Commands.QUIT	: "Usage: /quit message",
 	Commands.OP     : "Usage: /op nick",
-	Commands.NAMES  : "Usage: /names [channel]",
+	Commands.LIST  : "Usage: /names [channel]",
 	Commands.QUOTE  : "Usage: /quote raw_irc_command",
+	Commands.LIST   : "List channels in the server. Usage: /list [opt]",
 }
 
 
@@ -89,7 +92,7 @@ func _on_event(ev):
 		client.ACTION:
 			label.text += ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*\n"
 		client.NAMES:
-			label.text += "Users in channel: " + str(ev.names) + "\n"
+			label.text += "Users in channel: " + str(ev.list) + "\n"
 		client.NICK:
 			label.text += "You are now known as " + ev.nick + "\n"
 		client.NICK_IN_USE:
@@ -103,6 +106,10 @@ func _on_event(ev):
 			label.text += pre + ": \"" + ev.message + "\"\n"
 		client.ERR_CHANPRIVSNEEDED:
 			label.text += " -> Error: " + ev.message + "\n"
+		client.LIST:
+			for chan in ev.list:
+				label.text += str(chan) + "\n"
+			label.text += "\n\n"
 
 
 	scrolldown()
@@ -119,18 +126,6 @@ func help(cmd, suffix=""):
 	var help_msg = CMD_HELP[Commands.keys().find(cmd)]
 	label.text += suffix + "/" + cmd + ": " + help_msg + "\n"
 	return
-
-# Join an array from strings starting from the given start_index
-static func join_from(args: Array, start_index=0) -> String:
-	var string = ""
-	var i = -1
-
-	for word in args:
-		i += 1
-		if i < start_index:
-			continue
-		string += word + " "
-	return string
 
 # Given a prefix will find if there is any or multiple corresponding commands with that prefix
 func find_commands_from_prefix(prefix: String) -> PoolStringArray:
@@ -174,9 +169,9 @@ func _command(text):
 		Commands.CLEAR:
 			label.text = ""
 		Commands.QUOTE:
-			client.quote(join_from(args))
+			client.quote(StringUtils.join_from(args))
 		Commands.ME:
-			client.me(channel, join_from(args))
+			client.me(channel, StringUtils.join_from(args))
 		Commands.PART:
 			client.part(channel)
 		Commands.TOPIC:
@@ -184,7 +179,7 @@ func _command(text):
 				0:
 					client.quote("TOPIC " + channel)
 				_:
-					client.topic(channel, join_from(args))
+					client.topic(channel, StringUtils.join_from(args))
 		Commands.NICK:
 			client.set_nick(args[0])
 			nick = args[0]
@@ -193,23 +188,19 @@ func _command(text):
 			channel = args[0]
 		Commands.MSG:
 			if arglen >= 2:
-				client.send(args[0], join_from(args, 1))
+				client.send(args[0], StringUtils.join_from(args, 1))
 			else:
 				help(command, "Invalid number of arguments    -   ")
 		Commands.QUIT:
-			client.quit(join_from(args))
+			client.quit(StringUtils.join_from(args))
 		Commands.OP:
 			match arglen:
 				1:
 					client.op(channel, args[0])
 				_:
 					help(command, "Invalid number of arguments    -   ")
-		Commands.NAMES:
-			match arglen:
-				0:
-					client.names(channel)
-				_:
-					client.names(args[0] or channel)
+		Commands.LIST:
+				client.list(StringUtils.join_from(args))
 
 		_:
 			label.text += "Unrecognized command: /" + command + "\n"

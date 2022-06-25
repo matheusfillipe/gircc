@@ -43,7 +43,7 @@ func _connected():
    
    
 func _on_event(ev):
-   # The event (ev) object can contain the attributes: 'message', 'names', 'nick', 'topic', 'channel'...
+   # The event (ev) object can contain the attributes: 'message', 'list, 'nick', 'topic', 'channel'...
    # depending of the type. It is guaranteed to always have the 'type' attribute
 	match ev.type:
 		client.PRIVMSG:
@@ -59,7 +59,7 @@ func _on_event(ev):
          # Do something with ev.message and ev.channel
 			pass
 		client.NAMES:
-         # Do something with ev.names and ev.channel
+         # Do something with ev.list and ev.channel
 			pass
 		client.NICK:
          # Do something with ev.nick

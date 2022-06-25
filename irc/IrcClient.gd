@@ -6,6 +6,8 @@ const WSBackend = preload("res://irc/WSBackend.gd")
 const TCPBackend = preload("res://irc/TCPBackend.gd")
 const TCPSBackend = preload("res://irc/TCPSBackend.gd")
 
+const StringUtils = preload("res://irc/StringUtils.gd")
+
 enum Proto {
 	WS
 	WSS
@@ -23,23 +25,9 @@ enum {
 	NICK
 	NICK_IN_USE
 	TOPIC
+	LIST
 	ERR_CHANPRIVSNEEDED
 }
-
-class Event:
-	var names = PoolStringArray()
-	var message = ""
-	var nick = ""
-	var topic = ""
-	var channel = ""
-	var type: int
-
-	func _init(attrs: Dictionary):
-		if not "type" in attrs:
-			push_error("Event requires type.")
-		for key in attrs:
-			set(key, attrs[key])
-
 
 const ctcp_escape = '\u0001'
 
@@ -64,6 +52,42 @@ signal closed
 
 
 var init = false
+
+class Event:
+	var list = PoolStringArray()
+	var message = ""
+	var nick = ""
+	var topic = ""
+	var channel = ""
+	var type: int
+
+	func _init(attrs: Dictionary):
+		if not "type" in attrs:
+			push_error("Event requires type.")
+		for key in attrs:
+			set(key, attrs[key])
+
+class Accumulator:
+	var memory: Dictionary
+	func _init():
+		memory = {}
+
+	func start(key: int):
+		memory[key] = []
+
+	func has(key: int):
+		return key in memory
+
+	func add(key: int, value):
+		memory[key].append(value)
+
+	func pop(key: int):
+		var copy = memory[key]
+		var _n = memory.erase(key)
+		return copy
+
+
+var accumulator = Accumulator.new()
 
 
 func get_type(var_name: String) -> int:
@@ -182,7 +206,22 @@ func _connected():
 
 func _data(data):
 	_connected()
-	for msg in data.split("\r\n"):
+
+	var acc_key = -10
+
+	# Handle unterminated messages
+	if accumulator.has(acc_key):
+		data = StringUtils.join_from(accumulator.pop(acc_key)) + data
+
+	var msglist = Array(data.split("\r\n"))
+	var last_index = len(msglist) - 1
+	if not data.ends_with("\r\n"):
+		accumulator.start(acc_key)
+		accumulator.add(acc_key, msglist[-1])
+		last_index -= 1
+
+	# Process loop
+	for msg in msglist.slice(0, last_index):
 		if len(msg) == 0:
 			continue
 
@@ -193,11 +232,11 @@ func _data(data):
 			quote(msg.replace("PI", "PO"))
 			continue
 
-		irc_process(msg)
+		emit_events(msg)
 
 ############################
 # Parse and process irc protocool
-func irc_process(msg):
+func emit_events(msg):
 	if len(msg) < 0:
 		return
 
@@ -301,7 +340,7 @@ func irc_process(msg):
 					"353":
 						var channel = msg.split("=")[1].split(" ")[1]
 						var names = long_param.split(" ")
-						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "names": names}))
+						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "list": names}))
 
 					"332":
 						emit_signal("event", Event.new({
@@ -311,10 +350,25 @@ func irc_process(msg):
 							"message": long_param,
 							}))
 
+					# Unpriviledged ERR
 					"482":
 						emit_signal("event", Event.new({
 							"type": ERR_CHANPRIVSNEEDED,
 							"message": long_param,
+							}))
+
+					# LIST
+					"321":
+						accumulator.start(LIST)
+					"322":
+						if not accumulator.has(LIST):
+							return
+						accumulator.add(LIST, StringUtils.join_from(args, 3))
+
+					"323":
+						emit_signal("event", Event.new({
+							"type": LIST,
+							"list": accumulator.pop(LIST),
 							}))
 
 
@@ -375,6 +429,11 @@ func topic(channel: String, topic: String):
 func names(channel: String):
 	quote("NAMES %s" % [channel])
 
+# Gets a list of channels in the server.
+# Can take a param like ">3" (more than 3 users) or "T<60" (topic change in less than 60 min ago)
+# Capture the result with the "LIST" event
+func list(param: String=""):
+	quote("LIST " + param)
 
 # Send a custom ctcp command private message
 func ctcp(nick_or_channel: String, command: String):
