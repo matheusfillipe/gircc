@@ -170,11 +170,18 @@ func _command(text):
 			client.join(args[0])
 			channel = args[0]
 		Commands.MSG:
-			client.send(args[0], join_from(args, 1))
+			if arglen >= 2:
+				client.send(args[0], join_from(args, 1))
+			else:
+				help(command, "Invalid number of arguments    -   ")
 		Commands.QUIT:
 			client.quit(join_from(args))
 		Commands.OP:
-			client.op(channel, args[0])
+			match arglen:
+				1:
+					client.op(channel, args[0])
+				_:
+					help(command, "Invalid number of arguments    -   ")
 		Commands.NAMES:
 			match arglen:
 				0:
