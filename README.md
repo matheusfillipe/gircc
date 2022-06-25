@@ -89,6 +89,8 @@ func _on_event(ev):
 
 - Simple irc client in javascript: https://github.com/matheusfillipe/irc.js/blob/master/irc.js
 
+- IRC reference: https://modern.ircdocs.horse/
+
 
 
 # TODO

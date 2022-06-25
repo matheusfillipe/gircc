@@ -1,3 +1,5 @@
+# REFERENCE: https://modern.ircdocs.horse/
+
 extends Node
 
 const WSBackend = preload("res://irc/WSBackend.gd")
