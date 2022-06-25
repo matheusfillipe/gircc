@@ -149,7 +149,6 @@ func _command(text):
 
 func _on_Send_pressed():
 	for text in text_edit.text.split("\n"):
-<<<<<<< HEAD
 		if len(text) > 0:
 			if text.begins_with('/'):
 				
@@ -194,7 +193,6 @@ func join_args(args):
 	for i in args:
 		string += i
 	return string
-=======
 		if len(text) <= 0:
 			continue
 
@@ -210,7 +208,6 @@ func join_args(args):
 	text_edit.text = ""
 	scrolldown()
 
->>>>>>> 7be0c63dba6aeb97b9c3694133977761820d8d4a
 func scrolldown():
 	var bar: VScrollBar = scroll_container.get_v_scrollbar();
 	scroll_container.scroll_vertical = bar.max_value;
