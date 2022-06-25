@@ -326,7 +326,7 @@ func part(channel: String):
 
 # Quits the irc server
 func quit(message: String):
-	quote("QUIT :%s" % [message])
+	quote("QUIT %s" % [message])
 
 # Changes the mode for a specific channel
 # TODO Capture the result with the "mode" signal
@@ -351,7 +351,7 @@ func names(channel: String):
 
 # Send a custom ctcp command private message
 func ctcp(nick_or_channel: String, command: String):
-	quote("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape % [nick_or_channel, command])
+	quote(("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape) % [nick_or_channel, command])
 
 # /me action
 func me(nick_or_channel: String, message: String):

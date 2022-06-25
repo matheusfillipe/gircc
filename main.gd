@@ -34,6 +34,9 @@ func _ready():
 func _error(err):
 	print(err)
 
+func _closed():
+	label.text += "Connection closed.\n\n"
+
 func _connected():
 	# TODO do something? a green led?
 	print("GUI: irc connected")
