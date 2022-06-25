@@ -65,20 +65,45 @@ func _on_Send_pressed():
 	for text in text_edit.text.split("\n"):
 		if len(text) > 0:
 			if text.begins_with('/'):
-				match text.trim_prefix('/').split(' ')[0].to_upper():
+				
+				var capscommand = text.split(' ')[0].to_upper().trim_prefix('/')
+				var command = text.split(' ')[0]
+				var args = get_args(text.split(' ')[0], text)
+				var joinedargs = join_args(args)
+				print(command)
+				match capscommand:
 					"CLEAR":
 						label.text = ''
 					"ME":
-						client.me(channel, text.lstrip(text.split(' ')[0]+' '))
+						client.me(channel, joinedargs)
 					"PART":
 						client.part(channel)
+					"NICK":
+						client.set_nick(args[0])
+					"JOIN":
+						client.join(args[0])
+					"TOPIC":
+						client.topic(channel,joinedargs)
+					"QUIT":
+						client.quit(joinedargs)
 				text_edit.text = ""
 				return
 			client.send(channel, text)
 			label.text += channel + " -> " + nick + ": " + text + "\n"
 	text_edit.text = ""
 	scrolldown()
-
+func get_args(command, string):
+	var newstring = string.trim_prefix(command)
+	print(newstring)
+	var array = []
+	for args in newstring.lstrip(newstring.split(' ')[0]+' '):
+		array.append(args)
+	return array
+func join_args(args):
+	var string = ''
+	for i in args:
+		string += i
+	return string
 func scrolldown():
 	var bar: VScrollBar = scroll_container.get_v_scrollbar();
 	scroll_container.scroll_vertical = bar.max_value;
