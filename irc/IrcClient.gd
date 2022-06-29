@@ -9,28 +9,27 @@ const TCPSBackend = preload("res://irc/TCPSBackend.gd")
 const StringUtils = preload("res://irc/StringUtils.gd")
 
 enum Proto {
-	WS
-	WSS
-	TCP
-	TCPS
+	WS,
+	WSS,
+	TCP,
+	TCPS,
 }
 
 # Events
 enum {
-	PRIVMSG
-	ACTION
-	JOIN
-	NAMES
-	PART
-	NICK
-	NICK_IN_USE
-	TOPIC
-	LIST
-	ERR_CHANPRIVSNEEDED
+	PRIVMSG,
+	ACTION,
+	JOIN,
+	NAMES,
+	PART,
+	NICK,
+	NICK_IN_USE,
+	TOPIC,
+	LIST,
+	ERR_CHANPRIVSNEEDED,
 }
 
-const ctcp_escape = '\u0001'
-
+const ctcp_escape = "\u0001"
 
 var host: String
 var ws_host: String
@@ -50,8 +49,8 @@ signal error(message)
 signal event(_event)
 signal closed
 
-
 var init = false
+
 
 class Event:
 	var list = PoolStringArray()
@@ -67,8 +66,10 @@ class Event:
 		for key in attrs:
 			set(key, attrs[key])
 
+
 class Accumulator:
 	var memory: Dictionary
+
 	func _init():
 		memory = {}
 
@@ -114,7 +115,13 @@ func get_type(var_name: String) -> int:
 # _ws_host: Optional. Fallback websocket host to use. Useful for html5 compatible exports.
 #
 # _autojoin_room: Optional. Automatically join this room on connect.
-func _init(_nick: String, _username: String, _host: String, _ws_host: String = "", _autojoin_room: String = ""):
+func _init(
+	_nick: String,
+	_username: String,
+	_host: String,
+	_ws_host: String = "",
+	_autojoin_room: String = ""
+):
 	nick = _nick
 	username = _username
 	host = _host
@@ -151,17 +158,18 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 					proto = Proto.WS
 				"wss":
 					proto = Proto.WSS
-				_ :
+				_:
 					push_error("Unrecognized uri")
 
 		_:
 			push_error("Unrecognized uri")
 
-
 	match OS.get_name():
 		"HTML5":
 			if not proto in [Proto.WS, Proto.WSS]:
-				push_error("TCP is not supported in html5 exports. Use websockets or ws_host as a fallback!")
+				push_error(
+					"TCP is not supported in html5 exports. Use websockets or ws_host as a fallback!"
+				)
 
 	# Create backend
 	match proto:
@@ -181,7 +189,6 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 			backend = WSBackend.new()
 			backend.host_uri = "wss://" + host + ":" + str(port)
 
-
 	# Bind and Connect
 	backend.connect("closed", self, "_closed")
 	backend.connect("data_received", self, "_data")
@@ -189,11 +196,14 @@ func _init(_nick: String, _username: String, _host: String, _ws_host: String = "
 	backend.connect("connected", self, "_connected")
 	add_child(backend)
 
+
 func _closed():
 	emit_signal("closed")
 
+
 func _error(err):
 	emit_signal("error", err)
+
 
 func _connected():
 	if connected:
@@ -233,6 +243,7 @@ func _data(data):
 			continue
 
 		emit_events(msg)
+
 
 ############################
 # Parse and process irc protocool
@@ -286,76 +297,88 @@ func emit_events(msg):
 				if has_ctcp:
 					match ctcp_type:
 						ACTION:
-							emit_signal("event", Event.new({
-								"type": ctcp_type,
-								"channel": channel,
-								"nick": from_nick,
-								"message": ctcp_command.trim_prefix(ctcp_args[0] + " ")
-								})
+							emit_signal(
+								"event",
+								Event.new(
+									{
+										"type": ctcp_type,
+										"channel": channel,
+										"nick": from_nick,
+										"message": ctcp_command.trim_prefix(ctcp_args[0] + " ")
+									}
+								)
 							)
 				else:
-					emit_signal("event", Event.new({
-						"type": evtype,
-						"channel": channel,
-						"nick": from_nick,
-						"message": long_param
-						})
+					emit_signal(
+						"event",
+						Event.new(
+							{
+								"type": evtype,
+								"channel": channel,
+								"nick": from_nick,
+								"message": long_param
+							}
+						)
 					)
 
 			JOIN:
-				emit_signal("event", Event.new({
-					"type": evtype,
-					"channel": long_param
-					})
-				)
+				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
 
 			NICK:
-				emit_signal("event", Event.new({
-					"type": evtype,
-					"nick": long_param
-					})
-				)
+				emit_signal("event", Event.new({"type": evtype, "nick": long_param}))
 
 			PART:
-				emit_signal("event", Event.new({
-					"type": evtype,
-					"channel": long_param
-					})
-				)
+				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
 
 			TOPIC:
-				emit_signal("event", Event.new({
-					"type": evtype,
-					"nick": from_nick,
-					"channel": args[2],
-					"message": long_param,
-					})
+				emit_signal(
+					"event",
+					Event.new(
+						{
+							"type": evtype,
+							"nick": from_nick,
+							"channel": args[2],
+							"message": long_param,
+						}
+					)
 				)
 
-			_ :
-				match (reply_code):
+			_:
+				match reply_code:
 					"433":
 						emit_signal("event", Event.new({"type": NICK_IN_USE}))
 
 					"353":
 						var channel = msg.split("=")[1].split(" ")[1]
 						var names = long_param.split(" ")
-						emit_signal("event", Event.new({"type": NAMES, "channel": channel, "list": names}))
+						emit_signal(
+							"event", Event.new({"type": NAMES, "channel": channel, "list": names})
+						)
 
 					"332":
-						emit_signal("event", Event.new({
-							"type": TOPIC,
-							"nick": "",
-							"channel": args[3],
-							"message": long_param,
-							}))
+						emit_signal(
+							"event",
+							Event.new(
+								{
+									"type": TOPIC,
+									"nick": "",
+									"channel": args[3],
+									"message": long_param,
+								}
+							)
+						)
 
 					# Unpriviledged ERR
 					"482":
-						emit_signal("event", Event.new({
-							"type": ERR_CHANPRIVSNEEDED,
-							"message": long_param,
-							}))
+						emit_signal(
+							"event",
+							Event.new(
+								{
+									"type": ERR_CHANPRIVSNEEDED,
+									"message": long_param,
+								}
+							)
+						)
 
 					# LIST
 					"321":
@@ -366,15 +389,18 @@ func emit_events(msg):
 						accumulator.add(LIST, StringUtils.join_from(args, 3))
 
 					"323":
-						emit_signal("event", Event.new({
-							"type": LIST,
-							"list": accumulator.pop(LIST),
-							}))
-
-
+						emit_signal(
+							"event",
+							Event.new(
+								{
+									"type": LIST,
+									"list": accumulator.pop(LIST),
+								}
+							)
+						)
 
 	# Nick in use at login
-	elif (reply_code == "433"):
+	elif reply_code == "433":
 		nick = nick + "_"
 		set_nick(nick)
 
@@ -386,64 +412,77 @@ func quote(message: String):
 		print(">>> ", message)
 	backend.send(message)
 
+
 # Sends a private message or a message to a channel
 func send(nick_or_channel: String, message: String):
 	quote("PRIVMSG %s :%s" % [nick_or_channel, message])
+
 
 # Changes the nick of the client
 # Capture the result with the "NICK" event
 func set_nick(new_nick: String):
 	quote("nick %s" % [new_nick])
 
+
 # Joins a channel
 # Capture the result with the "JOIN" event
 func join(channel: String):
 	quote("JOIN %s" % [channel])
+
 
 # Leaves a channel
 # Capture the result with the "PART" event
 func part(channel: String):
 	quote("PART %s" % [channel])
 
+
 # Quits the irc server
 func quit(message: String):
 	quote("QUIT %s" % [message])
+
 
 # Changes the mode for a specific channel
 # TODO Capture the result with the "MODE" event
 func mode(channel: String, mode: String, _nick: String):
 	quote("MODE %s %s %s" % [channel, mode, _nick])
 
+
 # Kicks a user from a channel with a message
 # TODO Capture the result with the "KICK" event
 func kick(channel: String, _nick: String, message: String):
 	quote("KICK %s %s :" % [channel, _nick, message])
+
 
 # Changes the topic of a channel
 # Capture the result with the "JOIN" event
 func topic(channel: String, topic: String):
 	quote("TOPIC %s :%s" % [channel, topic])
 
+
 # Gets a list of names from the current channel
 # Capture the result with the "NAMES" event
 func names(channel: String):
 	quote("NAMES %s" % [channel])
 
+
 # Gets a list of channels in the server.
 # Can take a param like ">3" (more than 3 users) or "T<60" (topic change in less than 60 min ago)
 # Capture the result with the "LIST" event
-func list(param: String=""):
+func list(param: String = ""):
 	quote("LIST " + param)
+
 
 # Send a custom ctcp command private message
 func ctcp(nick_or_channel: String, command: String):
 	quote(("PRIVMSG %s :" + ctcp_escape + "%s" + ctcp_escape) % [nick_or_channel, command])
 
+
 # /me action
 func me(nick_or_channel: String, message: String):
 	ctcp(nick_or_channel, "ACTION " + message)
 
+
 # Adds op rights to a nick. Shorthand to /mode channel +o nick
 # TODO Capture the result with the "MODE" event
 func op(channel: String, _nick: String):
-	mode(channel, '+o', _nick)
+	mode(channel, "+o", _nick)

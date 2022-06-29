@@ -8,6 +8,7 @@ signal connected
 signal data_received(data)
 signal error(err)
 
+
 func _ready():
 	# Connect base signals to get notified of connection open, close, and errors.
 	_client.connect("connection_closed", self, "_closed")
@@ -26,11 +27,14 @@ func _closed(_was_clean = false):
 	emit_signal("closed")
 	set_process(false)
 
+
 func send(text: String):
 	_client.get_peer(1).put_packet((text + "\r\n").to_utf8())
 
+
 func _connected(_proto = ""):
 	emit_signal("connected")
+
 
 func _on_data():
 	var data = _client.get_peer(1).get_packet().get_string_from_utf8()

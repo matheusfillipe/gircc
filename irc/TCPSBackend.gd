@@ -10,8 +10,10 @@ signal error(err)
 var _status: int = 0
 var _stream: StreamPeerSSL = StreamPeerSSL.new()
 
+
 func _ready() -> void:
 	_status = _stream.get_status()
+
 
 func _process(_delta: float) -> void:
 	var new_status: int = _stream.get_status()
@@ -41,6 +43,7 @@ func _process(_delta: float) -> void:
 			else:
 				emit_signal("data_received", data[1].get_string_from_utf8())
 
+
 func connect_to_host(host: String, port: int) -> void:
 	print("TCP + SSL Connecting to %s:%d" % [host, port])
 	# Reset status so we can tell if it changes to error again.
@@ -53,6 +56,7 @@ func connect_to_host(host: String, port: int) -> void:
 	error = _stream.connect_to_stream(tcp)
 	if error != OK:
 		emit_signal("error", "TCP + SSL Error upgrading connection to SSL: " + str(error))
+
 
 func send(data: String) -> bool:
 	if _status != _stream.STATUS_CONNECTED:

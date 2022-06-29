@@ -19,43 +19,41 @@ onready var scroll_container = $ScrollContainer
 onready var label = $ScrollContainer/Label
 onready var text_edit = $TextEdit
 
-
 var client: IrcClient
 
 enum Commands {
-	HELP
-	CLEAR
-	ME
-	PART
-	NICK
-	JOIN
-	TOPIC
-	MSG
-	QUIT
-	OP
-	NAMES
-	QUOTE
-	LIST
+	HELP,
+	CLEAR,
+	ME,
+	PART,
+	NICK,
+	JOIN,
+	TOPIC,
+	MSG,
+	QUIT,
+	OP,
+	NAMES,
+	QUOTE,
+	LIST,
 }
 
 const command_prefix = "/"
 
 const CMD_HELP = {
-	Commands.HELP	: "Usage: /help command",
-	Commands.CLEAR	: "Clears the screen",
-	Commands.ME		: "Sends a message as an action. Usage: /me message",
-	Commands.PART	: "Usage: /part <channel>",
-	Commands.NICK	: "Usage: /nick <new nickname.",
-	Commands.JOIN	: "Usage: /join <channel>",
-	Commands.TOPIC	: "Usage: /topic topic",
-	Commands.MSG    : "Usage: /msg <nick> message",
-	Commands.QUIT	: "Usage: /quit message",
-	Commands.OP     : "Usage: /op nick",
-	Commands.LIST  : "Usage: /names [channel]",
-	Commands.QUOTE  : "Usage: /quote raw_irc_command",
-	Commands.LIST   : "List channels in the server. Usage: /list [opt]",
+	Commands.HELP: "Usage: /help command",
+	Commands.CLEAR: "Clears the screen",
+	Commands.ME: "Sends a message as an action. Usage: /me message",
+	Commands.PART: "Usage: /part <channel>",
+	Commands.NICK: "Usage: /nick <new nickname.",
+	Commands.JOIN: "Usage: /join <channel>",
+	Commands.TOPIC: "Usage: /topic topic",
+	Commands.MSG: "Usage: /msg <nick> message",
+	Commands.QUIT: "Usage: /quit message",
+	Commands.OP: "Usage: /op nick",
+	Commands.LIST: "Usage: /names [channel]",
+	Commands.QUOTE: "Usage: /quote raw_irc_command",
+	Commands.LIST: "List channels in the server. Usage: /list [opt]",
 }
-
 
 
 func _ready():
@@ -70,16 +68,20 @@ func _ready():
 
 	text_edit.grab_focus()
 
+
 func _error(err):
 	print(err)
 
+
 func _closed():
 	label.text += "Connection closed.\n\n"
+
 
 func _connected():
 	# TODO do something? a green led?
 	print("GUI: irc connected")
 	label.text += "CONNECTED...\n\n\n"
+
 
 func _on_event(ev):
 	match ev.type:
@@ -103,7 +105,7 @@ func _on_event(ev):
 				pre = "Topic set by " + ev.nick
 			else:
 				pre = "TOPIC"
-			label.text += pre + ": \"" + ev.message + "\"\n"
+			label.text += pre + ': "' + ev.message + '"\n'
 		client.ERR_CHANPRIVSNEEDED:
 			label.text += " -> Error: " + ev.message + "\n"
 		client.LIST:
@@ -111,14 +113,15 @@ func _on_event(ev):
 				label.text += str(chan) + "\n"
 			label.text += "\n\n"
 
-
 	scrolldown()
 
-func _input(ev):
-		if ev.is_action_pressed("send"):
-			_on_Send_pressed()
 
-func help(cmd, suffix=""):
+func _input(ev):
+	if ev.is_action_pressed("send"):
+		_on_Send_pressed()
+
+
+func help(cmd, suffix = ""):
 	cmd = cmd.to_upper()
 	if not cmd in Commands.keys():
 		label.text += suffix + "No help for: /" + cmd + "\n"
@@ -126,6 +129,7 @@ func help(cmd, suffix=""):
 	var help_msg = CMD_HELP[Commands.keys().find(cmd)]
 	label.text += suffix + "/" + cmd + ": " + help_msg + "\n"
 	return
+
 
 # Given a prefix will find if there is any or multiple corresponding commands with that prefix
 func find_commands_from_prefix(prefix: String) -> PoolStringArray:
@@ -136,6 +140,7 @@ func find_commands_from_prefix(prefix: String) -> PoolStringArray:
 			continue
 		can_be.append(cmd)
 	return can_be
+
 
 func _command(text):
 	var whitespace_split = text.split(" ")
@@ -200,7 +205,7 @@ func _command(text):
 				_:
 					help(command, "Invalid number of arguments    -   ")
 		Commands.LIST:
-				client.list(StringUtils.join_from(args))
+			client.list(StringUtils.join_from(args))
 
 		_:
 			label.text += "Unrecognized command: /" + command + "\n"
@@ -223,6 +228,7 @@ func _on_Send_pressed():
 	text_edit.text = ""
 	scrolldown()
 
+
 func scrolldown():
-	var bar: VScrollBar = scroll_container.get_v_scrollbar();
-	scroll_container.scroll_vertical = bar.max_value;
+	var bar: VScrollBar = scroll_container.get_v_scrollbar()
+	scroll_container.scroll_vertical = bar.max_value
