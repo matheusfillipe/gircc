@@ -53,6 +53,7 @@ var init = false
 
 
 class Event:
+	var source = ""
 	var list = PoolStringArray()
 	var message = ""
 	var nick = ""
@@ -63,6 +64,8 @@ class Event:
 	func _init(attrs: Dictionary):
 		if not "type" in attrs:
 			push_error("Event requires type.")
+		if not "source" in attrs:
+			push_error("Event requires source.")
 		for key in attrs:
 			set(key, attrs[key])
 
@@ -267,8 +270,8 @@ func emit_events(msg):
 
 	if init:
 		var evtype = get_type(args[1].to_upper())
-		var from = args[0].trim_prefix(":")
-		var from_nick = from.split("!")[0]
+		var source = args[0].trim_prefix(":")
+		var from_nick = source.split("!")[0]
 		var long_param = ""
 		var has_long_param = false
 		for arg in Array(args).slice(1, len(args) - 1):
@@ -301,6 +304,7 @@ func emit_events(msg):
 								"event",
 								Event.new(
 									{
+										"source": source,
 										"type": ctcp_type,
 										"channel": channel,
 										"nick": from_nick,
@@ -313,6 +317,7 @@ func emit_events(msg):
 						"event",
 						Event.new(
 							{
+								"source": source,
 								"type": evtype,
 								"channel": channel,
 								"nick": from_nick,
@@ -322,19 +327,26 @@ func emit_events(msg):
 					)
 
 			JOIN:
-				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
+				emit_signal(
+					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
+				)
 
 			NICK:
-				emit_signal("event", Event.new({"type": evtype, "nick": long_param}))
+				emit_signal(
+					"event", Event.new({"source": source, "type": evtype, "nick": long_param})
+				)
 
 			PART:
-				emit_signal("event", Event.new({"type": evtype, "channel": long_param}))
+				emit_signal(
+					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
+				)
 
 			TOPIC:
 				emit_signal(
 					"event",
 					Event.new(
 						{
+							"source": source,
 							"type": evtype,
 							"nick": from_nick,
 							"channel": args[2],
@@ -346,13 +358,16 @@ func emit_events(msg):
 			_:
 				match reply_code:
 					"433":
-						emit_signal("event", Event.new({"type": NICK_IN_USE}))
+						emit_signal("event", Event.new({"source": source, "type": NICK_IN_USE}))
 
 					"353":
 						var channel = msg.split("=")[1].split(" ")[1]
 						var names = long_param.split(" ")
 						emit_signal(
-							"event", Event.new({"type": NAMES, "channel": channel, "list": names})
+							"event",
+							Event.new(
+								{"source": source, "type": NAMES, "channel": channel, "list": names}
+							)
 						)
 
 					"332":
@@ -360,6 +375,7 @@ func emit_events(msg):
 							"event",
 							Event.new(
 								{
+									"source": source,
 									"type": TOPIC,
 									"nick": "",
 									"channel": args[3],
@@ -374,6 +390,7 @@ func emit_events(msg):
 							"event",
 							Event.new(
 								{
+									"source": source,
 									"type": ERR_CHANPRIVSNEEDED,
 									"message": long_param,
 								}
@@ -393,6 +410,7 @@ func emit_events(msg):
 							"event",
 							Event.new(
 								{
+									"source": source,
 									"type": LIST,
 									"list": accumulator.pop(LIST),
 								}

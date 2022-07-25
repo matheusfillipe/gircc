@@ -96,7 +96,11 @@ func _on_event(ev):
 		client.NAMES:
 			label.text += "Users in channel: " + str(ev.list) + "\n"
 		client.NICK:
-			label.text += "You are now known as " + ev.nick + "\n"
+			if ev.source == client.nick:
+				label.text += "You are now known as " + ev.nick + "\n"
+				nick = ev.nick
+			else:
+				label.text += ev.source.split("!")[0] + " is now known as " + ev.nick + "\n"
 		client.NICK_IN_USE:
 			label.text += "That nickname is already in use!\n"
 		client.TOPIC:
@@ -187,7 +191,6 @@ func _command(text):
 					client.topic(channel, StringUtils.join_from(args))
 		Commands.NICK:
 			client.set_nick(args[0])
-			nick = args[0]
 		Commands.JOIN:
 			client.join(args[0])
 			channel = args[0]

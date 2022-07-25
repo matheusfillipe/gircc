@@ -44,7 +44,7 @@ func _connected():
    
 func _on_event(ev):
    # The event (ev) object can contain the attributes: 'message', 'list, 'nick', 'topic', 'channel'...
-   # depending of the type. It is guaranteed to always have the 'type' attribute
+   # depending of the type. It is guaranteed to always have the 'type' and 'source' attributes
 	match ev.type:
 		client.PRIVMSG:
          # Do something with ev.message and ev.channel
@@ -106,5 +106,6 @@ func _on_event(ev):
    - [ ] https://datatracker.ietf.org/doc/html/rfc1459
 - [x] irc client that accepts one of the backends 
 - [ ] Better UI
+    - [ ]
 - [ ] Maybe turn this into a plugin/add on/lib
 
