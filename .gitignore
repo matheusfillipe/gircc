@@ -7,3 +7,4 @@
 # Mono-specific ignores
 .mono/
 data_*/
+irc/logs/
