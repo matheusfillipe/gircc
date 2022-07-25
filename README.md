@@ -71,7 +71,7 @@ func _on_event(ev):
          # Do something with ev.topic and ev.channel
 			pass
 		client.KICK:
-         # Do something with ev.nick and ev.channel
+         # Do something with ev.nick and ev.channel and ev.source might be also relevant on this case.
 			pass
          
       # And there is more....
@@ -99,13 +99,21 @@ func _on_event(ev):
    - [x] websocket backend
    - [x] tcp backend
    - [x] tcp ssl backend
-- [ ] Irc protocol parser
-   - [x] Basic parser
+
+- [x] irc client that accepts one of the backends 
+
+- [ ] Irc protocol parsing/handling and commands
    - [ ] Actions (emote), other's join, other's part
    - [ ] topic, mode, other users nick change and mode change, user kicked, banned
-   - [ ] https://datatracker.ietf.org/doc/html/rfc1459
-- [x] irc client that accepts one of the backends 
-- [ ] Better UI
-    - [ ]
-- [ ] Maybe turn this into a plugin/add on/lib
+   - [ ] Implement more? https://datatracker.ietf.org/doc/html/rfc1459
 
+- [ ] Better UI
+    - [ ] Better listview to display messages and unload old ones dynamically
+    - [ ] Better ui for /help
+    - [ ] Multiple tabs or windows per channel you join
+    - [ ] Highlight and make urls clickable
+    - [ ] Irc Color support (?)
+    - [ ] Image preview for urls (?)
+
+- [ ] Turn this into a configurable and reusable godot plugin/add on/lib with options
+    - [ ] Single channel (only one tab)
