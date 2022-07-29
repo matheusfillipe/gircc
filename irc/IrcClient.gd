@@ -271,7 +271,6 @@ func emit_events(msg):
 
 	if init:
 		var evtype = get_type(args[1].to_upper())
-		print("stuff is" + str(evtype))
 		var source = args[0].trim_prefix(":")
 		var from_nick = source.split("!")[0]
 		var long_param = ""
@@ -330,11 +329,11 @@ func emit_events(msg):
 
 			QUIT:
 				emit_signal(
-					"event", Event.new({"source": source.split('!')[0], "type": evtype, "channel": long_param})
+					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
 			JOIN:
 				emit_signal(
-					"event", Event.new({"source": source.split('!')[0], "type": evtype, "channel": long_param})
+					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
 
 			NICK:
@@ -344,7 +343,7 @@ func emit_events(msg):
 
 			PART:
 				emit_signal(
-					"event", Event.new({"source": source.split('!')[0], "type": evtype, "channel": long_param})
+					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
 
 			TOPIC:

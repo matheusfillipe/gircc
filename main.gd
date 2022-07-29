@@ -86,13 +86,13 @@ func _connected():
 func _on_event(ev):
 	match ev.type:
 		client.QUIT:
-			label.text += ev.source + " has quit.\n"
+			label.text += getnick(ev.source) + " has quit.\n"
 		client.PRIVMSG:
 			label.text += ev.channel + " -> " + ev.nick + ": " + ev.message + "\n"
 		client.PART:
-			label.text += ev.source + " has parted.\n"
+			label.text += getnick(ev.source) + " has parted.\n"
 		client.JOIN:
-			label.text += ev.source + " has joined.\n"
+			label.text += getnick(ev.source) + " has joined.\n"
 		client.ACTION:
 			label.text += ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*\n"
 		client.NAMES:
@@ -237,3 +237,5 @@ func _on_Send_pressed():
 func scrolldown():
 	var bar: VScrollBar = scroll_container.get_v_scrollbar()
 	scroll_container.scroll_vertical = bar.max_value
+func getnick(source):
+	return source.split('!')[0]
