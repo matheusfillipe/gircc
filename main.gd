@@ -85,12 +85,14 @@ func _connected():
 
 func _on_event(ev):
 	match ev.type:
+		client.QUIT:
+			label.text += ev.source + " has quit.\n"
 		client.PRIVMSG:
 			label.text += ev.channel + " -> " + ev.nick + ": " + ev.message + "\n"
 		client.PART:
-			label.text += "LEFT " + ev.channel + "\n"
+			label.text += ev.source + " has parted.\n"
 		client.JOIN:
-			label.text += "JOINED " + ev.channel + "\n"
+			label.text += ev.source + " has joined.\n"
 		client.ACTION:
 			label.text += ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*\n"
 		client.NAMES:
