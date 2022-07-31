@@ -42,18 +42,19 @@ enum Commands {
 const command_prefix = "/"
 
 const CMD_HELP = {
-	Commands.HELP: "Usage: /help command",
+	Commands.KICK: "Usage: /kick <user> [reason]",
+	Commands.HELP: "Usage: /help <command>",
 	Commands.CLEAR: "Clears the screen",
-	Commands.ME: "Sends a message as an action. Usage: /me message",
+	Commands.ME: "Sends a message as an action. Usage: /me <message>",
 	Commands.PART: "Usage: /part <channel>",
 	Commands.NICK: "Usage: /nick <new nickname.",
 	Commands.JOIN: "Usage: /join <channel>",
-	Commands.TOPIC: "Usage: /topic topic",
-	Commands.MSG: "Usage: /msg <nick> message",
-	Commands.QUIT: "Usage: /quit message",
-	Commands.OP: "Usage: /op nick",
+	Commands.TOPIC: "Usage: /topic <topic>",
+	Commands.MSG: "Usage: /msg <nick> <message>",
+	Commands.QUIT: "Usage: /quit <message>",
+	Commands.OP: "Usage: /op <nick>",
 	Commands.LIST: "Usage: /names [channel]",
-	Commands.QUOTE: "Usage: /quote raw_irc_command",
+	Commands.QUOTE: "Usage: /quote <raw_irc_command>",
 	Commands.LIST: "List channels in the server. Usage: /list [opt]",
 }
 
