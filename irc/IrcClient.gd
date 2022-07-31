@@ -17,6 +17,7 @@ enum Proto {
 
 # Events
 enum {
+	KICK,
 	QUIT,
 	PRIVMSG,
 	ACTION,
@@ -326,7 +327,10 @@ func emit_events(msg):
 							}
 						)
 					)
-
+			KICK:
+				emit_signal(
+					"event", Event.new({"source": source, "type": evtype, "nick": args[3], "channel": args[2], "message": long_param})
+				)
 			QUIT:
 				emit_signal(
 					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
@@ -335,17 +339,14 @@ func emit_events(msg):
 				emit_signal(
 					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
-
 			NICK:
 				emit_signal(
 					"event", Event.new({"source": source, "type": evtype, "nick": long_param})
 				)
-
 			PART:
 				emit_signal(
 					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
-
 			TOPIC:
 				emit_signal(
 					"event",
@@ -472,8 +473,8 @@ func mode(channel: String, mode: String, _nick: String):
 
 # Kicks a user from a channel with a message
 # TODO Capture the result with the "KICK" event
-func kick(channel: String, _nick: String, message: String):
-	quote("KICK %s %s :" % [channel, _nick, message])
+func kick(channel: String, _nick: String, message= ''):
+	quote("KICK %s %s : %s" % [channel, _nick, message])
 
 
 # Changes the topic of a channel

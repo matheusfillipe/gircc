@@ -22,6 +22,8 @@ onready var text_edit = $TextEdit
 var client: IrcClient
 
 enum Commands {
+	KICK,
+	MODE,
 	HELP,
 	CLEAR,
 	ME,
@@ -85,6 +87,9 @@ func _connected():
 
 func _on_event(ev):
 	match ev.type:
+		client.KICK:
+			label.text += getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message
+			print(ev.channel)
 		client.QUIT:
 			label.text += getnick(ev.source) + " has quit.\n"
 		client.PRIVMSG:
@@ -176,7 +181,13 @@ func _command(text):
 			for cmd in Commands.keys():
 				label.text += command_prefix + cmd + "\n"
 			label.text += "\n"
-
+		Commands.KICK:
+			if arglen > 1:
+				client.kick(channel, args[0], args[1])
+			else:
+				client.kick(channel, args[0])
+		Commands.MODE:
+			client.mode(channel,args[1],nick)
 		Commands.CLEAR:
 			label.text = ""
 		Commands.QUOTE:
@@ -237,5 +248,6 @@ func _on_Send_pressed():
 func scrolldown():
 	var bar: VScrollBar = scroll_container.get_v_scrollbar()
 	scroll_container.scroll_vertical = bar.max_value
+
 func getnick(source):
 	return source.split('!')[0]
