@@ -62,6 +62,7 @@ class Event:
 	var nick = ""
 	var topic = ""
 	var channel = ""
+	var mode = ""
 	var type: int
 
 	func _init(attrs: Dictionary):
@@ -330,7 +331,7 @@ func emit_events(msg):
 					)
 			MODE:
 				emit_signal(
-					"event", Event.new({"source": args[3], "type": evtype, "channel": args[2], 'nick': source })
+					"event", Event.new({"mode": args[3], "type": evtype, "channel": args[2], 'nick': source })
 				)
 			KICK:
 				emit_signal(
