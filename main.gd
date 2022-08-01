@@ -89,7 +89,7 @@ func _connected():
 func _on_event(ev):
 	match ev.type:
 		client.MODE:
-			label.text += getnick(ev.nick) + " has set mode " + ev.mode + " on channel " + ev.channel + '\n'
+			label.text += getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '\n'
 		client.KICK:
 			label.text += getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'\n'
 			print(ev.channel)

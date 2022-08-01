@@ -331,7 +331,7 @@ func emit_events(msg):
 					)
 			MODE:
 				emit_signal(
-					"event", Event.new({"mode": args[3], "type": evtype, "channel": args[2], 'nick': source })
+					"event", Event.new({'source': source, "mode": args[3], "type": evtype, "channel": args[2]})
 				)
 			KICK:
 				emit_signal(
