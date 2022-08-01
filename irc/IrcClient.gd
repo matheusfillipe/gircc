@@ -17,6 +17,7 @@ enum Proto {
 
 # Events
 enum {
+	MODE,
 	KICK,
 	QUIT,
 	PRIVMSG,
@@ -327,6 +328,10 @@ func emit_events(msg):
 							}
 						)
 					)
+			MODE:
+				emit_signal(
+					"event", Event.new({"source": args[3], "type": evtype, "channel": args[2], 'nick': source })
+				)
 			KICK:
 				emit_signal(
 					"event", Event.new({"source": source, "type": evtype, "nick": args[3], "channel": args[2], "message": long_param})
