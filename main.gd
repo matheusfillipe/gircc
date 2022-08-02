@@ -16,9 +16,8 @@ export(bool) var debug = true
 export var nick = "godot"
 
 onready var scroll_container = $ScrollContainer
-onready var label = $ScrollContainer/Label
 onready var text_edit = $TextEdit
-
+onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
 
 enum Commands {
@@ -77,55 +76,55 @@ func _error(err):
 
 
 func _closed():
-	label.text += "Connection closed.\n\n"
+	add_text("Connection closed.")
 
 
 func _connected():
 	# TODO do something? a green led?
 	print("GUI: irc connected")
-	label.text += "CONNECTED...\n\n\n"
+	add_text("CONNECTED...")
 
 
 func _on_event(ev):
 	match ev.type:
 		client.MODE:
-			label.text += getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '\n'
+			add_text(getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '')
 		client.KICK:
-			label.text += getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'\n'
+			add_text(getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'')
 			print(ev.channel)
 		client.QUIT:
-			label.text += getnick(ev.source) + " has quit.\n"
+			add_text(getnick(ev.source) + " has quit.")
 		client.PRIVMSG:
-			label.text += ev.channel + " -> " + ev.nick + ": " + ev.message + "\n"
+			add_text(ev.channel + " -> " + ev.nick + ": " + ev.message + "")
 		client.PART:
-			label.text += getnick(ev.source) + " has parted.\n"
+			add_text(getnick(ev.source) + " has parted.")
 		client.JOIN:
-			label.text += getnick(ev.source) + " has joined.\n"
+			add_text(getnick(ev.source) + " has joined.")
 		client.ACTION:
-			label.text += ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*\n"
+			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*")
 		client.NAMES:
-			label.text += "Users in channel: " + str(ev.list) + "\n"
+			add_text("Users in channel: " + str(ev.list) + "")
 		client.NICK:
 			if ev.source == client.nick:
-				label.text += "You are now known as " + ev.nick + "\n"
+				add_text("You are now known as " + ev.nick + "")
 				nick = ev.nick
 			else:
-				label.text += ev.source.split("!")[0] + " is now known as " + ev.nick + "\n"
+				add_text(ev.source.split("!")[0] + " is now known as " + ev.nick + "")
 		client.NICK_IN_USE:
-			label.text += "That nickname is already in use!\n"
+			add_text("That nickname is already in use!")
 		client.TOPIC:
 			var pre = ""
 			if ev.nick:
 				pre = "Topic set by " + ev.nick
 			else:
 				pre = "TOPIC"
-			label.text += pre + ': "' + ev.message + '"\n'
+			add_text(pre + ': "' + ev.message + '"')
 		client.ERR_CHANPRIVSNEEDED:
-			label.text += " -> Error: " + ev.message + "\n"
+			add_text(" -> Error: " + ev.message + "")
 		client.LIST:
 			for chan in ev.list:
-				label.text += str(chan) + "\n"
-			label.text += "\n\n"
+				add_text(str(chan) + "")
+			add_text("")
 
 	scrolldown()
 
@@ -138,10 +137,10 @@ func _input(ev):
 func help(cmd, suffix = ""):
 	cmd = cmd.to_upper()
 	if not cmd in Commands.keys():
-		label.text += suffix + "No help for: /" + cmd + "\n"
+		add_text(suffix + "No help for: /" + cmd + "")
 		return
 	var help_msg = CMD_HELP[Commands.keys().find(cmd)]
-	label.text += suffix + "/" + cmd + ": " + help_msg + "\n"
+	add_text(suffix + "/" + cmd + ": " + help_msg + "")
 	return
 
 
@@ -173,7 +172,7 @@ func _command(text):
 	if len(can_be) == 1:
 		cmd_id = Commands.keys().find(can_be[0])
 	elif len(can_be) > 1:
-		label.text += " -> /" + command + " could be multiple commands: " + str(can_be) + "\n"
+		add_text(" -> /" + command + " could be multiple commands: " + str(can_be) + "")
 		return
 
 	match cmd_id:
@@ -182,8 +181,8 @@ func _command(text):
 				help(args[0])
 
 			for cmd in Commands.keys():
-				label.text += command_prefix + cmd + "\n"
-			label.text += "\n"
+				add_text(command_prefix + cmd + "")
+			add_text("")
 		Commands.KICK:
 			if arglen > 1:
 				client.kick(channel, args[0], args[1])
@@ -192,7 +191,7 @@ func _command(text):
 		Commands.MODE:
 			client.mode(channel,args[1],nick)
 		Commands.CLEAR:
-			label.text = ""
+			clear()
 		Commands.QUOTE:
 			client.quote(StringUtils.join_from(args))
 		Commands.ME:
@@ -227,11 +226,11 @@ func _command(text):
 			client.list(StringUtils.join_from(args))
 
 		_:
-			label.text += "Unrecognized command: /" + command + "\n"
+			add_text("Unrecognized command: /" + command + "")
 
 
 func _on_Send_pressed():
-	for text in text_edit.text.split("\n"):
+	for text in text_edit.text.split(""):
 		if len(text) <= 0:
 			continue
 
@@ -242,9 +241,9 @@ func _on_Send_pressed():
 
 		# Send message to current channel
 		client.send(channel, text)
-		label.text += channel + " -> " + nick + ": " + text + "\n"
+		add_text(channel + " -> " + nick + ": " + text + "")
 
-	text_edit.text = ""
+	text_edit.text = ''
 	scrolldown()
 
 
@@ -254,3 +253,11 @@ func scrolldown():
 
 func getnick(source):
 	return source.split('!')[0]
+func add_text(text):
+	var label = Label.new()
+	container.add_child(label)
+	label.text = text
+func clear():
+	for child in container.get_children():
+		container.remove_child(child)
+		child.queue_free()
