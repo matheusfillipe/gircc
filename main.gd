@@ -19,7 +19,7 @@ onready var scroll_container = $ScrollContainer
 onready var text_edit = $TextEdit
 onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
-
+var channellist: Array
 enum Commands {
 	KICK,
 	MODE,
@@ -99,7 +99,10 @@ func _on_event(ev):
 		client.PART:
 			add_text(getnick(ev.source) + " has parted.")
 		client.JOIN:
-			add_text(getnick(ev.source) + " has joined.")
+			if getnick(ev.source) == nick:
+				create_buffer()
+			else:
+				add_text(getnick(ev.source) + " has joined.")
 		client.ACTION:
 			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*")
 		client.NAMES:
@@ -261,3 +264,8 @@ func clear():
 	for child in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+func create_buffer():
+	var buffer = preload("res://Buffer.tscn").instance()
+	buffer.channel = channel
+	add_child(buffer)
+	

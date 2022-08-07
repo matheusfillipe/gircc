@@ -28,8 +28,9 @@ margin_right = -113.0
 margin_bottom = -14.0
 
 [node name="ScrollContainer" type="ScrollContainer" parent="."]
+margin_top = -3.0
 margin_right = 1010.0
-margin_bottom = 517.0
+margin_bottom = 514.0
 follow_focus = true
 scroll_horizontal_enabled = false
 

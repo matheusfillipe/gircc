@@ -1,0 +1,2 @@
+extends ScrollContainer
+var channel
