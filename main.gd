@@ -15,11 +15,12 @@ export var channel = "#romanian"
 export(bool) var debug = true
 export var nick = "godot"
 
+onready var tab_container = $TabContainer
 onready var scroll_container = $ScrollContainer
 onready var text_edit = $TextEdit
 onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
-var channellist: Array
+var channellist: Dictionary
 enum Commands {
 	KICK,
 	MODE,
@@ -88,42 +89,42 @@ func _connected():
 func _on_event(ev):
 	match ev.type:
 		client.MODE:
-			add_text(getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '')
+			add_text(getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '', ev.channel)
 		client.KICK:
-			add_text(getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'')
+			add_text(getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'', ev.channel)
 			print(ev.channel)
 		client.QUIT:
-			add_text(getnick(ev.source) + " has quit.")
+			add_text(getnick(ev.source) + " has quit.", ev.channel)
 		client.PRIVMSG:
-			add_text(ev.channel + " -> " + ev.nick + ": " + ev.message + "")
+			add_text(ev.channel + " -> " + ev.nick + ": " + ev.message + "", ev.channel)
 		client.PART:
-			add_text(getnick(ev.source) + " has parted.")
+			add_text(getnick(ev.source) + " has parted.", ev.channel)
 		client.JOIN:
 			if getnick(ev.source) == nick:
-				create_buffer()
+				create_buffer(ev.channel)
 			else:
-				add_text(getnick(ev.source) + " has joined.")
+				add_text(getnick(ev.source) + " has joined.", ev.channel)
 		client.ACTION:
-			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*")
+			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*", ev.channel)
 		client.NAMES:
-			add_text("Users in channel: " + str(ev.list) + "")
+			add_text("Users in channel: " + str(ev.list) + "", ev.channel)
 		client.NICK:
 			if ev.source == client.nick:
-				add_text("You are now known as " + ev.nick + "")
+				add_text("You are now known as " + ev.nick + "", ev.channel)
 				nick = ev.nick
 			else:
-				add_text(ev.source.split("!")[0] + " is now known as " + ev.nick + "")
+				add_text(ev.source.split("!")[0] + " is now known as " + ev.nick + "", ev.channel)
 		client.NICK_IN_USE:
-			add_text("That nickname is already in use!")
+			add_text("That nickname is already in use!", ev.channel)
 		client.TOPIC:
 			var pre = ""
 			if ev.nick:
 				pre = "Topic set by " + ev.nick
 			else:
 				pre = "TOPIC"
-			add_text(pre + ': "' + ev.message + '"')
+			add_text(pre + ': "' + ev.message + '"', ev.channel)
 		client.ERR_CHANPRIVSNEEDED:
-			add_text(" -> Error: " + ev.message + "")
+			add_text(" -> Error: " + ev.message + "", ev.channel)
 		client.LIST:
 			for chan in ev.list:
 				add_text(str(chan) + "")
@@ -244,7 +245,7 @@ func _on_Send_pressed():
 
 		# Send message to current channel
 		client.send(channel, text)
-		add_text(channel + " -> " + nick + ": " + text + "")
+		add_text(channel + " -> " + nick + ": " + text + "", channel)
 
 	text_edit.text = ''
 	scrolldown()
@@ -256,16 +257,21 @@ func scrolldown():
 
 func getnick(source):
 	return source.split('!')[0]
-func add_text(text):
+func add_text(text, channelname = null):
 	var label = Label.new()
-	container.add_child(label)
 	label.text = text
+	if channelname && channelname[0] == '#':
+		channellist[channelname].add_label(label)
+	else:
+		container.add_child(label)
 func clear():
 	for child in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
-func create_buffer():
+func create_buffer(channel):
 	var buffer = preload("res://Buffer.tscn").instance()
 	buffer.channel = channel
-	add_child(buffer)
-	
+	channellist[channel] = buffer
+	tab_container.add_child(buffer)
+func delete_buffer(channel):
+	pass
