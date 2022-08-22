@@ -9,6 +9,7 @@ const StringUtils = preload("res://irc/StringUtils.gd")
 
 # The URL we will connect to
 # export var irc_url = "irc.dot.org.es"
+export var server = "irc.dot.org.es"
 export var irc_url = "ircs://irc.dot.org.es:6697"
 export var websocket_url = "wss://irc.dot.org.es:7669"
 export var channel = "#romanian"
@@ -21,6 +22,7 @@ onready var text_edit = $TextEdit
 onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
 var channellist: Dictionary
+var currentchannel: String
 enum Commands {
 	KICK,
 	MODE,
@@ -70,6 +72,7 @@ func _ready():
 	add_child(client)
 
 	text_edit.grab_focus()
+	create_buffer(server)
 
 
 func _error(err):
@@ -202,6 +205,7 @@ func _command(text):
 			client.me(channel, StringUtils.join_from(args))
 		Commands.PART:
 			client.part(channel)
+			delete_buffer(channel)
 		Commands.TOPIC:
 			match arglen:
 				0:
@@ -244,7 +248,7 @@ func _on_Send_pressed():
 			continue
 
 		# Send message to current channel
-		client.send(channel, text)
+		client.send(currentchannel, text)
 		add_text(channel + " -> " + nick + ": " + text + "", channel)
 
 	text_edit.text = ''
@@ -263,7 +267,7 @@ func add_text(text, channelname = null):
 	if channelname && channelname[0] == '#':
 		channellist[channelname].add_label(label)
 	else:
-		container.add_child(label)
+		channellist[server].add_label(label)
 func clear():
 	for child in container.get_children():
 		container.remove_child(child)
@@ -272,6 +276,10 @@ func create_buffer(channel):
 	var buffer = preload("res://Buffer.tscn").instance()
 	buffer.channel = channel
 	channellist[channel] = buffer
+	buffer.set_name(channel)
 	tab_container.add_child(buffer)
 func delete_buffer(channel):
-	pass
+	tab_container.remove_child(channellist[channel])
+
+func _on_TabContainer_tab_changed(tab):
+	currentchannel = tab_container.get_tab_control(tab).channel

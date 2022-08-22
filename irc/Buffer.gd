@@ -1,4 +1,5 @@
-extends ScrollContainer
+extends Control
 var channel
+onready var scroll = $ScrollContainer/VBoxContainer
 func add_label(object):
-	$VBoxContainer.add_child(object)
+	scroll.add_child(object)
