@@ -111,6 +111,7 @@ func _on_event(ev):
 			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*", ev.channel)
 		client.NAMES:
 			add_text("Users in channel: " + str(ev.list) + "", ev.channel)
+			print(ev.channel)
 		client.NICK:
 			if ev.source == client.nick:
 				add_text("You are now known as " + ev.nick + "", ev.channel)
@@ -249,7 +250,7 @@ func _on_Send_pressed():
 
 		# Send message to current channel
 		client.send(currentchannel, text)
-		add_text(channel + " -> " + nick + ": " + text + "", channel)
+		add_text(channel + " -> " + nick + ": " + text + "", currentchannel)
 
 	text_edit.text = ''
 	scrolldown()
@@ -283,3 +284,4 @@ func delete_buffer(channel):
 
 func _on_TabContainer_tab_changed(tab):
 	currentchannel = tab_container.get_tab_control(tab).channel
+	print(currentchannel)

@@ -373,7 +373,7 @@ func emit_events(msg):
 						emit_signal("event", Event.new({"source": source, "type": NICK_IN_USE}))
 
 					"353":
-						var channel = msg.split(":")[1].split(" ")[1]
+						var channel = msg.split(":")[1].split(" ")[4]
 						var names = long_param.split(" ")
 						emit_signal(
 							"event",
