@@ -103,7 +103,7 @@ func _on_event(ev):
 - [x] irc client that accepts one of the backends 
 
 - [ ] Irc protocol parsing/handling and commands
-   - [ ] Actions (emote), other's join, other's part
+   - [x] Actions (emote), other's join, other's part
    - [ ] topic, mode, other users nick change and mode change, user kicked, banned
    - [ ] Implement more? https://datatracker.ietf.org/doc/html/rfc1459
 
