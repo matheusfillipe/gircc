@@ -331,11 +331,23 @@ func emit_events(msg):
 					)
 			MODE:
 				emit_signal(
-					"event", Event.new({'source': source, "mode": args[3], "type": evtype, "channel": args[2]})
+					"event",
+					Event.new(
+						{"source": source, "mode": args[3], "type": evtype, "channel": args[2]}
+					)
 				)
 			KICK:
 				emit_signal(
-					"event", Event.new({"source": source, "type": evtype, "nick": args[3], "channel": args[2], "message": long_param})
+					"event",
+					Event.new(
+						{
+							"source": source,
+							"type": evtype,
+							"nick": args[3],
+							"channel": args[2],
+							"message": long_param
+						}
+					)
 				)
 			QUIT:
 				emit_signal(
@@ -479,7 +491,7 @@ func mode(channel: String, mode: String, _nick: String):
 
 # Kicks a user from a channel with a message
 # TODO Capture the result with the "KICK" event
-func kick(channel: String, _nick: String, message= ''):
+func kick(channel: String, _nick: String, message = ""):
 	quote("KICK %s %s : %s" % [channel, _nick, message])
 
 

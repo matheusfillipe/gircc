@@ -1,7 +1,3 @@
-# loudercake TODO implement /help and other commands like /quote /join /part /topic and whatever is already a function implemented on the bottom of IrcClient.gd
-
-# loudercake TODO keep improving this gui
-
 extends Control
 
 const IrcClient = preload("res://irc/IrcClient.gd")
@@ -84,7 +80,6 @@ func _closed():
 
 
 func _connected():
-	# TODO do something? a green led?
 	print("GUI: irc connected")
 	add_text("CONNECTED...")
 
@@ -92,9 +87,15 @@ func _connected():
 func _on_event(ev):
 	match ev.type:
 		client.MODE:
-			add_text(getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + '', ev.channel)
+			add_text(
+				getnick(ev.source) + " has set mode " + ev.mode + " on channel " + ev.channel + "",
+				ev.channel
+			)
 		client.KICK:
-			add_text(getnick(ev.nick) + ' was kicked by ' + getnick(ev.source) + ': ' + ev.message +'', ev.channel)
+			add_text(
+				getnick(ev.nick) + " was kicked by " + getnick(ev.source) + ": " + ev.message + "",
+				ev.channel
+			)
 			print(ev.channel)
 		client.QUIT:
 			add_text(getnick(ev.source) + " has quit.", ev.channel)
@@ -197,7 +198,7 @@ func _command(text):
 			else:
 				client.kick(channel, args[0])
 		Commands.MODE:
-			client.mode(channel,args[1],nick)
+			client.mode(channel, args[1], nick)
 		Commands.CLEAR:
 			clear()
 		Commands.QUOTE:
@@ -252,7 +253,7 @@ func _on_Send_pressed():
 		client.send(currentchannel, text)
 		add_text(channel + " -> " + nick + ": " + text + "", currentchannel)
 
-	text_edit.text = ''
+	text_edit.text = ""
 	scrolldown()
 
 
@@ -260,27 +261,37 @@ func scrolldown():
 	var bar: VScrollBar = scroll_container.get_v_scrollbar()
 	scroll_container.scroll_vertical = bar.max_value
 
+
 func getnick(source):
-	return source.split('!')[0]
+	return source.split("!")[0]
+
+
 func add_text(text, channelname = null):
 	var label = Label.new()
 	label.text = text
-	if channelname && channelname[0] == '#':
+	if channelname && channelname[0] == "#":
 		channellist[channelname].add_label(label)
 	else:
 		channellist[server].add_label(label)
+
+
 func clear():
 	for child in container.get_children():
 		container.remove_child(child)
 		child.queue_free()
+
+
 func create_buffer(channel):
 	var buffer = preload("res://Buffer.tscn").instance()
 	buffer.channel = channel
 	channellist[channel] = buffer
 	buffer.set_name(channel)
 	tab_container.add_child(buffer)
+
+
 func delete_buffer(channel):
 	tab_container.remove_child(channellist[channel])
+
 
 func _on_TabContainer_tab_changed(tab):
 	currentchannel = tab_container.get_tab_control(tab).channel

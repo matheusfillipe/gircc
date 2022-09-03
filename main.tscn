@@ -24,12 +24,12 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 tab_align = 0
 
-[node name="TextEdit" type="TextEdit" parent="."]
+[node name="TextEdit" type="LineEdit" parent="."]
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
 margin_left = 30.0
-margin_top = -65.0
+margin_top = -40.0
 margin_right = -113.0
 margin_bottom = -14.0
 
