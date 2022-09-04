@@ -17,8 +17,9 @@ onready var scroll_container = $ScrollContainer
 onready var text_edit = $TextEdit
 onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
-var channellist: Dictionary
+var buffers: Dictionary
 var currentchannel: String
+
 enum Commands {
 	KICK,
 	MODE,
@@ -81,7 +82,7 @@ func _closed():
 
 func _connected():
 	print("GUI: irc connected")
-	add_text("CONNECTED...")
+	buffers[server].add_message("CONNECTED...", null, "red")
 
 
 func _on_event(ev):
@@ -100,7 +101,7 @@ func _on_event(ev):
 		client.QUIT:
 			add_text(getnick(ev.source) + " has quit.", ev.channel)
 		client.PRIVMSG:
-			add_text(ev.channel + " -> " + ev.nick + ": " + ev.message + "", ev.channel)
+			buffers[ev.channel].add_message(ev.message, ev.nick)
 		client.PART:
 			add_text(getnick(ev.source) + " has parted.", ev.channel)
 		client.JOIN:
@@ -251,7 +252,7 @@ func _on_Send_pressed():
 
 		# Send message to current channel
 		client.send(currentchannel, text)
-		add_text(channel + " -> " + nick + ": " + text + "", currentchannel)
+		buffers[currentchannel].add_message(text, nick)
 
 	text_edit.text = ""
 	scrolldown()
@@ -267,12 +268,10 @@ func getnick(source):
 
 
 func add_text(text, channelname = null):
-	var label = Label.new()
-	label.text = text
 	if channelname && channelname[0] == "#":
-		channellist[channelname].add_label(label)
+		buffers[channelname].add_message(text)
 	else:
-		channellist[server].add_label(label)
+		buffers[server].add_message(text)
 
 
 func clear():
@@ -284,15 +283,21 @@ func clear():
 func create_buffer(channel):
 	var buffer = preload("res://Buffer.tscn").instance()
 	buffer.channel = channel
-	channellist[channel] = buffer
+	buffers[channel] = buffer
 	buffer.set_name(channel)
 	tab_container.add_child(buffer)
+	tab_container.set_current_tab(len(tab_container.get_children()) - 1)
 
 
 func delete_buffer(channel):
-	tab_container.remove_child(channellist[channel])
+	tab_container.remove_child(buffers[channel])
+	var current_buffer = tab_container.get_current_tab_control()
+	if current_buffer:
+		currentchannel = current_buffer.channel
+	else:
+		currentchannel = server
+		tab_container.set_current_tab(0)
 
 
 func _on_TabContainer_tab_changed(tab):
 	currentchannel = tab_container.get_tab_control(tab).channel
-	print(currentchannel)
