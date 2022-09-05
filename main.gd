@@ -13,9 +13,7 @@ export(bool) var debug = true
 export var nick = "godot"
 
 onready var tab_container = $TabContainer
-onready var scroll_container = $ScrollContainer
 onready var text_edit = $TextEdit
-onready var container = $ScrollContainer/VBoxContainer
 var client: IrcClient
 var buffers: Dictionary
 var currentchannel: String
@@ -103,7 +101,7 @@ func _on_event(ev):
 		client.PRIVMSG:
 			buffers[ev.channel].add_message(ev.message, ev.nick)
 		client.PART:
-			add_text(getnick(ev.source) + " has parted.", ev.channel)
+			add_text(getnick(ev.source) + " has parted " + ev.channel + ".", ev.channel)
 		client.JOIN:
 			if getnick(ev.source) == nick:
 				create_buffer(ev.channel)
@@ -113,7 +111,7 @@ func _on_event(ev):
 			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*", ev.channel)
 		client.NAMES:
 			add_text("Users in channel: " + str(ev.list) + "", ev.channel)
-			print(ev.channel)
+			buffers[ev.channel].add_nicks(ev.list)
 		client.NICK:
 			if ev.source == client.nick:
 				add_text("You are now known as " + ev.nick + "", ev.channel)
@@ -136,7 +134,7 @@ func _on_event(ev):
 				add_text(str(chan) + "")
 			add_text("")
 
-	scrolldown()
+	buffers[currentchannel].scroll_to_bottom()
 
 
 func _input(ev):
@@ -195,31 +193,30 @@ func _command(text):
 			add_text("")
 		Commands.KICK:
 			if arglen > 1:
-				client.kick(channel, args[0], args[1])
+				client.kick(currentchannel, args[0], args[1])
 			else:
-				client.kick(channel, args[0])
+				client.kick(currentchannel, args[0])
 		Commands.MODE:
-			client.mode(channel, args[1], nick)
+			client.mode(currentchannel, args[1], nick)
 		Commands.CLEAR:
-			clear()
+			buffers[currentchannel].clear()
 		Commands.QUOTE:
 			client.quote(StringUtils.join_from(args))
 		Commands.ME:
-			client.me(channel, StringUtils.join_from(args))
+			client.me(currentchannel, StringUtils.join_from(args))
 		Commands.PART:
-			client.part(channel)
-			delete_buffer(channel)
+			client.part(currentchannel)
+			delete_buffer(currentchannel)
 		Commands.TOPIC:
 			match arglen:
 				0:
-					client.quote("TOPIC " + channel)
+					client.quote("TOPIC " + currentchannel)
 				_:
-					client.topic(channel, StringUtils.join_from(args))
+					client.topic(currentchannel, StringUtils.join_from(args))
 		Commands.NICK:
 			client.set_nick(args[0])
 		Commands.JOIN:
 			client.join(args[0])
-			channel = args[0]
 		Commands.MSG:
 			if arglen >= 2:
 				client.send(args[0], StringUtils.join_from(args, 1))
@@ -230,7 +227,7 @@ func _command(text):
 		Commands.OP:
 			match arglen:
 				1:
-					client.op(channel, args[0])
+					client.op(currentchannel, args[0])
 				_:
 					help(command, "Invalid number of arguments    -   ")
 		Commands.LIST:
@@ -255,12 +252,7 @@ func _on_Send_pressed():
 		buffers[currentchannel].add_message(text, nick)
 
 	text_edit.text = ""
-	scrolldown()
-
-
-func scrolldown():
-	var bar: VScrollBar = scroll_container.get_v_scrollbar()
-	scroll_container.scroll_vertical = bar.max_value
+	buffers[currentchannel].scroll_to_bottom()
 
 
 func getnick(source):
@@ -274,12 +266,6 @@ func add_text(text, channelname = null):
 		buffers[server].add_message(text)
 
 
-func clear():
-	for child in container.get_children():
-		container.remove_child(child)
-		child.queue_free()
-
-
 func create_buffer(channel):
 	var buffer = preload("res://Buffer.tscn").instance()
 	buffer.channel = channel
@@ -291,6 +277,7 @@ func create_buffer(channel):
 
 func delete_buffer(channel):
 	tab_container.remove_child(buffers[channel])
+	tab_container.set_current_tab(len(tab_container.get_children()) - 1)
 	var current_buffer = tab_container.get_current_tab_control()
 	if current_buffer:
 		currentchannel = current_buffer.channel
