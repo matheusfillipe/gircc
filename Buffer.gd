@@ -78,9 +78,10 @@ func add_message(text, nick=null, color=null):
 	else:
 		_text += _parse_irc_text(text)
 
-	# TODO Colorize nicks using a regex or so to avoid replacing it just anywhere
 	for nick in nicks:
-		_text = _text.replace(nick, "[color=%s]%s[/color]" % [nicks[nick], nick])
+		var regex = RegEx.new()
+		regex.compile("\\b" + nick + "\\b")
+		_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
 
 	label.bbcode_text = _text
 	scroll.add_child(label)

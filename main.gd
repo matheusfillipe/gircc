@@ -111,7 +111,8 @@ func _on_event(ev):
 			add_text(ev.channel + " -> " + ev.nick + ": " + "*" + ev.message + "*", ev.channel)
 		client.NAMES:
 			add_text("Users in channel: " + str(ev.list) + "", ev.channel)
-			buffers[ev.channel].add_nicks(ev.list)
+			if ev.channel in buffers:
+				buffers[ev.channel].add_nicks(ev.list)
 		client.NICK:
 			if ev.source == client.nick:
 				add_text("You are now known as " + ev.nick + "", ev.channel)
