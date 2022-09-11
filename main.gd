@@ -289,3 +289,9 @@ func delete_buffer(channel):
 
 func _on_TabContainer_tab_changed(tab):
 	currentchannel = tab_container.get_tab_control(tab).channel
+
+# Ctrl + W Closes the current tab
+func _unhandled_input(event):
+	if event is InputEventKey:
+		if event.pressed and event.control and event.scancode == KEY_W:
+			delete_buffer(currentchannel)
