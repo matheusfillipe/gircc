@@ -87,6 +87,7 @@ func _parse_irc_text(text):
 	var underline = false
 	var current_color = null
 	var background_color = null
+	var stack = []
 	var i = 0
 	while i < text.length():
 		var c = text[i]
@@ -94,51 +95,45 @@ func _parse_irc_text(text):
 			pass
 		elif c == BoldEscape:
 			if bold:
-				parsed += "[/b]"
+				parsed += stack.pop()
 			else:
 				parsed += "[b]"
+				stack.append("[/b]")
 			bold = !bold
 		elif c == ItalicEscape:
 			if italic:
-				parsed += "[/i]"
+				parsed += stack.pop()
 			else:
 				parsed += "[i]"
+				stack.append("[/i]")
 			italic = !italic
 		elif c == UnderlineEscape:
 			if underline:
-				parsed += "[/u]"
+				parsed += stack.pop()
 			else:
 				parsed += "[u]"
+				stack.append("[/u]")
 			underline = !underline
 		elif c == ColorEscape:
 			if current_color != null:
-				parsed += "[/color]"
+				parsed += stack.pop()
 				current_color = null
 			else:
 				var color = text.substr(i + 1, 2)
 				if color in color_map:
 					parsed += "[color=" + color_map[color] + "]"
 					current_color = color
+					stack.append("[/color]")
 					i += 2
 		else:
 			parsed += c
 
 		i += 1
 
-	if italic:
-		parsed += "[/i]"
-	if bold:
-		parsed += "[/b]"
-	if underline:
-		parsed += "[/u]"
-	if current_color != null:
-		parsed += "[/color]"
-	if background_color != null:
-		parsed += "[/background]"
+	# pop all remaining tags
+	while stack.size() > 1:
+		parsed += stack.pop()
 
-	print("----------------------------------------------------------")
-	print(parsed)
-	print("----------------------------------------------------------")
 	return parsed
 
 
@@ -154,6 +149,9 @@ func add_message(text, nick = null, color = null):
 
 	var _text = ""
 	var prefix = ""
+	# Escape bbcode
+	text = text.replace("[", "[\u200b")
+	text = text.replace("]", "]\u200b")
 	if nick != null:  # choose color from hash
 		var _color = COLORS[hash(nick) % len(COLORS)]
 		prefix += "[color=%s][b]%s[/b][/color]: " % [_color, nick]
@@ -167,7 +165,6 @@ func add_message(text, nick = null, color = null):
 		_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
 	_text = prefix + _text
 	label.bbcode_text = _text
-	print(label.bbcode_text)
 	scroll.add_child(label)
 
 
