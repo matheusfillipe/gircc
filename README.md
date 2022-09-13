@@ -102,17 +102,18 @@ func _on_event(ev):
 
 - [x] irc client that accepts one of the backends 
 
-- [ ] Irc protocol parsing/handling and commands
+- [x] Irc protocol parsing/handling and commands
    - [x] Actions (emote), other's join, other's part
-   - [ ] topic, mode, other users nick change and mode change, user kicked, banned
+   - [x] topic, mode, other users nick change and mode change, user kicked, banned
    - [ ] Implement more? https://datatracker.ietf.org/doc/html/rfc1459
 
-- [ ] Better UI
-    - [ ] Better listview to display messages and unload old ones dynamically
+- [x] Better UI
+    - [x] Better listview to display messages and unload old ones dynamically
+    - [ ] Add close button to tabs
     - [ ] Better ui for /help
-    - [ ] Multiple tabs or windows per channel you join
+    - [x] Multiple tabs or windows per channel you join
     - [ ] Highlight and make urls clickable
-    - [ ] Irc Color support (?)
+    - [x] Irc Color support (?)
     - [ ] Image preview for urls (?)
 
 - [ ] Turn this into a configurable and reusable godot plugin/add on/lib with options
