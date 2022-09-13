@@ -78,8 +78,17 @@ func add_nicks(nicknames):
 				break
 		nicks[nickname] = COLORS[hash(nickname) % len(COLORS)]
 
+# Determines irc color code from 2 character strings
+func _irc_color(color: String) -> String:
+	if color in color_map:
+		return color_map[color]
+	if "0" + color[0] in color_map:
+		return color_map["0" + color[0]]
+	return "#ffffff"
 
-# TODO parse irc colors, special texts
+
+
+# HACK bbcode is hacky, change this to use add_text, push_bold, push_color, etc...
 func _parse_irc_text(text):
 	var parsed = ""
 	var italic = false
@@ -91,48 +100,73 @@ func _parse_irc_text(text):
 	var i = 0
 	while i < text.length():
 		var c = text[i]
-		if c == ColorEscape:
-			pass
-		elif c == BoldEscape:
-			if bold:
-				parsed += stack.pop()
-			else:
-				parsed += "[b]"
-				stack.append("[/b]")
-			bold = !bold
-		elif c == ItalicEscape:
-			if italic:
-				parsed += stack.pop()
-			else:
-				parsed += "[i]"
-				stack.append("[/i]")
-			italic = !italic
-		elif c == UnderlineEscape:
-			if underline:
-				parsed += stack.pop()
-			else:
-				parsed += "[u]"
-				stack.append("[/u]")
-			underline = !underline
-		elif c == ColorEscape:
-			if current_color != null:
-				parsed += stack.pop()
-				current_color = null
-			else:
-				var color = text.substr(i + 1, 2)
-				if color in color_map:
-					parsed += "[color=" + color_map[color] + "]"
-					current_color = color
-					stack.append("[/color]")
-					i += 2
-		else:
-			parsed += c
+
+		match c:
+
+			BoldEscape:
+				if bold:
+					parsed += stack.pop_back()
+				else:
+					parsed += "[b]"
+					stack.append("[/b]")
+				bold = !bold
+
+			ItalicEscape:
+				if italic:
+					parsed += stack.pop_back()
+				else:
+					parsed += "[i]"
+					stack.append("[/i]")
+				italic = !italic
+
+			UnderlineEscape:
+				if underline:
+					parsed += stack.pop_back()
+				else:
+					parsed += "[u]"
+					stack.append("[/u]")
+				underline = !underline
+
+			ColorEscape:
+				if background_color != null:
+					parsed += stack.pop_back()
+					background_color = null
+				elif current_color != null:
+					parsed += stack.pop_back()
+					current_color = null
+				else:
+					if text[i+1] == ",":
+						# Just background
+						var bgcolor = _irc_color(text.substr(i + 2, 2))
+						parsed += "[background=" + bgcolor + "]"
+						stack.append("[/background]")
+						background_color = bgcolor
+						i += 3
+
+					else:
+						# Foreground color
+						var color = _irc_color(text.substr(i + 1, 2))
+						parsed += "[color=" + color + "]"
+						current_color = color
+						stack.append("[/color]")
+						i += 2
+
+						if text[i+1] == ",":
+							# Foreground and background
+							var bgcolor = _irc_color(text.substr(i + 2, 2))
+							parsed += "[background=" + bgcolor + "]"
+							stack.append("[/background]")
+							background_color = bgcolor
+							i += 3
+
+			_:
+				parsed += c
 
 		i += 1
 
-	# pop all remaining tags
+	# pop_back all remaining tags
 	while stack.size() > 1:
-		parsed += stack.pop()
+		parsed += stack.pop_back()
 
 	return parsed
 
@@ -149,9 +183,11 @@ func add_message(text, nick = null, color = null):
 
 	var _text = ""
 	var prefix = ""
+
 	# Escape bbcode
 	text = text.replace("[", "[\u200b")
 	text = text.replace("]", "]\u200b")
+
 	if nick != null:  # choose color from hash
 		var _color = COLORS[hash(nick) % len(COLORS)]
 		prefix += "[color=%s][b]%s[/b][/color]: " % [_color, nick]
@@ -159,10 +195,13 @@ func add_message(text, nick = null, color = null):
 		_text += "[color=" + color + "]" + text + "[/color]"
 	else:
 		_text += _parse_irc_text(text)
-	for nick in nicks:
-		var regex = RegEx.new()
-		regex.compile("\\b" + nick + "\\b")
-		_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
+
+	if color != null:
+		for nick in nicks:
+			var regex = RegEx.new()
+			regex.compile("\\b" + nick + "\\b")
+			_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
+
 	_text = prefix + _text
 	label.bbcode_text = _text
 	scroll.add_child(label)
