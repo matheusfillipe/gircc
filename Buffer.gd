@@ -1,8 +1,8 @@
 extends Control
 var channel
 var nicks = {}
-onready var scroll_container = $ScrollContainer
-onready var scroll = $ScrollContainer/VBoxContainer
+@onready var scroll_container = $ScrollContainer
+@onready var scroll = $ScrollContainer/VBoxContainer
 
 var is_scrolled_up = false
 

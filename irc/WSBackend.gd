@@ -11,10 +11,10 @@ signal error(err)
 
 func _ready():
 	# Connect base signals to get notified of connection open, close, and errors.
-	_client.connect("connection_closed", self, "_closed")
-	_client.connect("connection_error", self, "_closed")
-	_client.connect("connection_established", self, "_connected")
-	_client.connect("data_received", self, "_on_data")
+	_client.connect("connection_closed", self._closed)
+	_client.connect("connection_error", self._closed)
+	_client.connect("connection_established", self._connected)
+	_client.connect("data_received", self._on_data)
 
 	# Initiate connection to the given URL.
 	var err = _client.connect_to_url(host_uri)
@@ -29,7 +29,7 @@ func _closed(_was_clean = false):
 
 
 func send(text: String):
-	_client.get_peer(1).put_packet((text + "\r\n").to_utf8())
+	_client.get_peer(1).put_packet((text + "\r\n").to_utf8_buffer())
 
 
 func _connected(_proto = ""):

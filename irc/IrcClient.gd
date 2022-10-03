@@ -41,7 +41,7 @@ var username: String
 var autojoin_room: String
 var port: int
 var proto: int
-var connected: bool = false
+var is_connected: bool = false
 var debug: bool = false
 
 # Either WSBackend ot TCPBackend
@@ -57,7 +57,7 @@ var init = false
 
 class Event:
 	var source = ""
-	var list = PoolStringArray()
+	var list = PackedStringArray()
 	var message = ""
 	var nick = ""
 	var topic = ""
@@ -149,11 +149,11 @@ func _init(
 			port = 6667
 		2:
 			host = split_uri[0]
-			port = int(split_uri[1])
+			port = split_uri[1].to_int()
 			proto = Proto.TCP
 		3:
 			host = split_uri[1].trim_prefix("//").trim_prefix("/")
-			port = int(split_uri[2])
+			port = split_uri[2].to_int()
 
 			var scheme = split_uri[0]
 			match scheme:
@@ -218,7 +218,7 @@ func _connected():
 	quote("nick " + nick)
 	quote("user " + username + " * * :" + username)
 	emit_signal("connected")
-	connected = true
+	is_connected = true
 
 
 func _data(data):

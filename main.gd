@@ -1,19 +1,19 @@
 extends Control
 
-const IrcClient = preload("res://irc/IrcClient.gd")
-const StringUtils = preload("res://irc/StringUtils.gd")
+var IrcClient = preload("res://irc/IrcClient.gd")
+var StringUtils = preload("res://irc/StringUtils.gd")
 
 # The URL we will connect to
 # export var irc_url = "irc.dot.org.es"
-export var server = "irc.dot.org.es"
-export var irc_url = "ircs://irc.dot.org.es:6697"
-export var websocket_url = "wss://irc.dot.org.es:7669"
-export var channel = "#romanian"
-export(bool) var debug = true
-export var nick = "godot"
+@export var server: String = "irc.dot.org.es"
+@export var irc_url: String = "ircs://irc.dot.org.es:6697"
+@export var websocket_url: String = "wss://irc.dot.org.es:7669"
+@export var channel: String = "#romanian"
+@export var debug: bool = true
+@export var nick: String = "godot"
 
-onready var tab_container = $TabContainer
-onready var text_edit = $TextEdit
+@onready var tab_container = $TabContainer
+@onready var text_edit = $TextEdit
 var client: IrcClient
 var buffers: Dictionary
 var currentchannel: String
@@ -50,9 +50,9 @@ const CMD_HELP = {
 	Commands.MSG: "Usage: /msg <nick> <message>",
 	Commands.QUIT: "Usage: /quit <message>",
 	Commands.OP: "Usage: /op <nick>",
-	Commands.LIST: "Usage: /names [channel]",
+	Commands.NAMES: "Usage: /names [channel]",
 	Commands.QUOTE: "Usage: /quote <raw_irc_command>",
-	Commands.LIST: "List channels in the server. Usage: /list [opt]",
+	Commands.LIST: "List channels in the server. Usage: /list [opt]"
 }
 
 
@@ -154,9 +154,9 @@ func help(cmd, suffix = ""):
 
 
 # Given a prefix will find if there is any or multiple corresponding commands with that prefix
-func find_commands_from_prefix(prefix: String) -> PoolStringArray:
+func find_commands_from_prefix(prefix: String) -> PackedStringArray:
 	prefix = prefix.to_upper()
-	var can_be = PoolStringArray()
+	var can_be = PackedStringArray()
 	for cmd in Commands.keys():
 		if not cmd.to_upper().begins_with(prefix):
 			continue
@@ -167,7 +167,7 @@ func find_commands_from_prefix(prefix: String) -> PoolStringArray:
 func _command(text):
 	var whitespace_split = text.split(" ")
 	var command = whitespace_split[0].trim_prefix(command_prefix)
-	var args = PoolStringArray()
+	var args = PackedStringArray()
 
 	if len(whitespace_split) > 1:
 		args = text.trim_prefix(command_prefix + command + " ").split(" ")
