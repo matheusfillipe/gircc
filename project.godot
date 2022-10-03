@@ -8,6 +8,16 @@
 
 config_version=5
 
+_global_script_classes=[{
+"base": "Node",
+"class": &"IrcClient",
+"language": &"GDScript",
+"path": "res://irc/IrcClient.gd"
+}]
+_global_script_class_icons={
+"IrcClient": ""
+}
+
 [application]
 
 config/name="gircc"

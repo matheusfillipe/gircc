@@ -67,7 +67,7 @@ var color_map = {
 
 
 func _ready():
-	scroll_container.get_v_scrollbar().connect("value_changed", self, "on_scroll")
+	scroll_container.get_v_scroll_bar().value_changed.connect(self.on_scroll)
 
 
 func add_nicks(nicknames):
@@ -197,7 +197,7 @@ func add_message(text, nick = null, color = null):
 		_text += _parse_irc_text(text)
 
 	if color != null:
-		for nick in nicks:
+		for usernames in nicks:
 			var regex = RegEx.new()
 			regex.compile("\\b" + nick + "\\b")
 			_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
@@ -208,13 +208,13 @@ func add_message(text, nick = null, color = null):
 
 
 func _max_scrollbar_value():
-	return scroll_container.get_v_scrollbar().max_value
+	return scroll_container.get_v_scroll_bar().max_value
 
 
 func scroll_to_bottom():
 	if is_scrolled_up:
 		return
-	yield(get_tree(), "idle_frame")
+	await get_tree().process_frame
 	scroll_container.scroll_vertical = _max_scrollbar_value()
 
 

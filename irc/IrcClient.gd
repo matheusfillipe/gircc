@@ -1,4 +1,5 @@
 # REFERENCE: https://modern.ircdocs.horse/
+class_name IrcClient
 
 extends Node
 
@@ -197,10 +198,10 @@ func _init(
 			backend.host_uri = "wss://" + host + ":" + str(port)
 
 	# Bind and Connect
-	backend.connect("closed", self, "_closed")
-	backend.connect("data_received", self, "_data")
-	backend.connect("error", self, "_error")
-	backend.connect("connected", self, "_connected")
+	backend.closed.connect(self._closed)
+	backend.data_received.connect( self._data)
+	backend.error.connect( self._error)
+	backend.connected.connect( self._connected)
 	add_child(backend)
 
 

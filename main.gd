@@ -60,10 +60,10 @@ func _ready():
 	client = IrcClient.new(nick, nick, irc_url, websocket_url, channel)
 	client.debug = debug
 	var _n
-	_n = client.connect("connected", self, "_connected")
-	_n = client.connect("closed", self, "_closed")
-	_n = client.connect("error", self, "_error")
-	_n = client.connect("event", self, "_on_event")
+	_n = client.connected.connect(self._connected)
+	_n = client.closed.connect(self._closed)
+	_n = client.error.connect(self._error)
+	_n = client.event.connect(self._on_event)
 	add_child(client)
 
 	text_edit.grab_focus()
@@ -260,15 +260,15 @@ func getnick(source):
 	return source.split("!")[0]
 
 
-func add_text(text, channelname = null):
-	if channelname && channelname[0] == "#":
+func add_text(text, channelname = ''):
+	if channelname[0] == '#':
 		buffers[channelname].add_message(text)
 	else:
 		buffers[server].add_message(text)
 
 
 func create_buffer(channel):
-	var buffer = preload("res://Buffer.tscn").instance()
+	var buffer = preload("res://Buffer.tscn").instantiate()
 	buffer.channel = channel
 	buffers[channel] = buffer
 	buffer.set_name(channel)
@@ -293,5 +293,6 @@ func _on_TabContainer_tab_changed(tab):
 # Ctrl + W Closes the current tab
 func _unhandled_input(event):
 	if event is InputEventKey:
-		if event.pressed and event.control and event.scancode == KEY_W:
+		print(event.get_keycode_with_modifiers())
+		if event.pressed and event.keycode == KEY_W:
 			delete_buffer(currentchannel)
