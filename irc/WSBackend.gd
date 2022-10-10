@@ -6,7 +6,7 @@ var host_uri: String
 signal closed
 signal connected
 signal data_received(data)
-signal error(err)
+signal on_error(err)
 
 
 func _ready():
@@ -19,7 +19,7 @@ func _ready():
 	# Initiate connection to the given URL.
 	var err = _client.connect_to_url(host_uri)
 	if err != OK:
-		error.emit("WS Unable to connect")
+		on_error.emit("WS Unable to connect")
 		set_process(false)
 
 

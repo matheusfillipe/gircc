@@ -12,7 +12,6 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("2")
 script = ExtResource("1")
-irc_url = "irc://irc.dot.org.es:6697"
 channel = "#bots"
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]

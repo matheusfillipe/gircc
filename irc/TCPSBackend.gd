@@ -7,6 +7,9 @@ signal connected
 signal data_received(data)
 signal on_error(err)
 
+var tcp: StreamPeerTCP = StreamPeerTCP.new()
+var tcp_connected: bool = false
+var erroed: bool = false
 var _status: int = 0
 var _stream: StreamPeerTLS = StreamPeerTLS.new()
 
@@ -16,6 +19,21 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if erroed:
+		return
+
+	tcp.poll()
+	if not tcp_connected and tcp.get_status() == _stream.STATUS_CONNECTED:
+		tcp_connected = true
+		var error = _stream.connect_to_stream(tcp)
+		if error != OK:
+			on_error.emit("TCP + SSL Error upgrading connection to SSL: " + str(error))
+			print("TCP + SSL Error upgrading connection to SSL: " + str(error))
+			erroed = true
+			return
+		print("TCP + SSL Connected")
+
+	_stream.poll()
 	var new_status: int = _stream.get_status()
 	if new_status != _status:
 		_status = new_status
@@ -48,14 +66,10 @@ func connect_to_host(host: String, port: int) -> void:
 	print("TCP + SSL Connecting to %s:%d" % [host, port])
 	# Reset status so we can tell if it changes to on_error again.
 	_status = _stream.STATUS_DISCONNECTED
-	var tcp: StreamPeerTCP = StreamPeerTCP.new()
 	var error: int = tcp.connect_to_host(host, port)
 	if error != OK:
 		on_error.emit("TCP + SSL Error connecting to host: " + str(error))
-		return
-	error = _stream.connect_to_stream(tcp)
-	if error != OK:
-		on_error.emit("TCP + SSL Error upgrading connection to SSL: " + str(error))
+		print("TCP + SSL Error connecting to host: " + str(error))
 
 
 func send(data: String) -> bool:

@@ -16,6 +16,7 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	_stream.poll()
 	var new_status: int = _stream.get_status()
 	if new_status != _status:
 		_status = new_status
@@ -42,8 +43,12 @@ func connect_to_host(host: String, port: int) -> void:
 	print("TCP Connecting to %s:%d" % [host, port])
 	# Reset status so we can tell if it changes to on_error again.
 	_status = _stream.STATUS_NONE
-	if _stream.connect_to_host(host, port) != OK:
-		on_error.emit("TCP Error connecting to host.")
+	var err = _stream.connect_to_host(host, port)
+	if err != OK:
+		on_error.emit("TCP Error connecting to host: ", err)
+		print("TCP Error connecting to host: ", err)
+		return
+	print("TCP Connected to %s:%d" % [host, port])
 
 
 func send(data: String) -> bool:

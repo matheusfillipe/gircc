@@ -214,7 +214,7 @@ func _error(err):
 
 
 func _connected():
-	if connected:
+	if is_connected:
 		return
 	quote("nick " + nick)
 	quote("user " + username + " * * :" + username)
@@ -239,7 +239,7 @@ func _data(data):
 		last_index -= 1
 
 	# Process loop
-	for msg in msglist.slice(0, last_index):
+	for msg in msglist.slice(0, last_index + 1):
 		if len(msg) == 0:
 			continue
 
@@ -279,7 +279,7 @@ func emit_events(msg):
 		var from_nick = source.split("!")[0]
 		var long_param = ""
 		var has_long_param = false
-		for arg in Array(args).slice(1, len(args) - 1):
+		for arg in Array(args).slice(1, len(args)):
 			if not has_long_param and arg.begins_with(":"):
 				has_long_param = true
 				long_param += arg.trim_prefix(":")
