@@ -215,10 +215,10 @@ func add_message(text, nick = null, color = null):
 		_text += _parse_irc_text(text)
 
 	if color != null:
-		for usernames in nicks:
+		for username in nicks:
 			var regex = RegEx.new()
-			regex.compile("\\b" + nick + "\\b")
-			_text = regex.sub(_text, "[color=" + nicks[nick] + "]" + nick + "[/color]", true)
+			regex.compile("\\b" + username + "\\b")
+			_text = regex.sub(_text, "[color=" + nicks[username] + "]" + username + "[/color]", true)
 
 	_text = prefix + _text
 	label.bbcode_text = _text
