@@ -1,10 +1,10 @@
 [gd_resource type="Theme" load_steps=11 format=3 uid="uid://s0c8kg8earca"]
 
-[ext_resource type="FontFile" uid="uid://8p6gaxnepjb1" path="res://fonts/NotoSans-Regular.ttf" id="1"]
-[ext_resource type="FontFile" uid="uid://cjts6281noivy" path="res://fonts/NotoSans-Bold.ttf" id="2"]
-[ext_resource type="FontFile" uid="uid://d4k8v0d3j6ftv" path="res://fonts/NotoSans-Italic.ttf" id="3"]
-[ext_resource type="FontFile" uid="uid://opphjeoyilkt" path="res://fonts/NotoSans-BoldItalic.ttf" id="4"]
-[ext_resource type="FontFile" uid="uid://cex6ulkd46j6n" path="res://fonts/NotoSansMono-Regular.ttf" id="5"]
+[ext_resource type="FontFile" uid="uid://ccionib4ivcqb" path="res://fonts/NotoSans-Regular.ttf" id="1"]
+[ext_resource type="FontFile" uid="uid://baxs4mbkafdqr" path="res://fonts/NotoSans-Bold.ttf" id="2"]
+[ext_resource type="FontFile" uid="uid://dl4en30lpu3wl" path="res://fonts/NotoSans-Italic.ttf" id="3"]
+[ext_resource type="FontFile" uid="uid://hiw1cdbgwrea" path="res://fonts/NotoSans-BoldItalic.ttf" id="4"]
+[ext_resource type="FontFile" uid="uid://br2e7ro12cutv" path="res://fonts/NotoSansMono-Regular.ttf" id="5"]
 
 [sub_resource type="FontFile" id="1"]
 fallbacks = [ExtResource("2")]

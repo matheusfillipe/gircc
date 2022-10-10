@@ -200,17 +200,17 @@ func _init(
 	# Bind and Connect
 	backend.closed.connect(self._closed)
 	backend.data_received.connect( self._data)
-	backend.error.connect( self._error)
+	backend.on_error.connect( self._error)
 	backend.connected.connect( self._connected)
 	add_child(backend)
 
 
 func _closed():
-	emit_signal("closed")
+	closed.emit()
 
 
 func _error(err):
-	emit_signal("error", err)
+	error.emit(err)
 
 
 func _connected():
@@ -218,7 +218,7 @@ func _connected():
 		return
 	quote("nick " + nick)
 	quote("user " + username + " * * :" + username)
-	emit_signal("connected")
+	connected.emit()
 	is_connected = true
 
 
@@ -305,8 +305,7 @@ func emit_events(msg):
 				if has_ctcp:
 					match ctcp_type:
 						ACTION:
-							emit_signal(
-								"event",
+							event.emit(
 								Event.new(
 									{
 										"source": source,
@@ -318,8 +317,7 @@ func emit_events(msg):
 								)
 							)
 				else:
-					emit_signal(
-						"event",
+					event.emit(
 						Event.new(
 							{
 								"source": source,
@@ -331,15 +329,13 @@ func emit_events(msg):
 						)
 					)
 			MODE:
-				emit_signal(
-					"event",
+				event.emit(
 					Event.new(
 						{"source": source, "mode": args[3], "type": evtype, "channel": args[2]}
 					)
 				)
 			KICK:
-				emit_signal(
-					"event",
+				event.emit(
 					Event.new(
 						{
 							"source": source,
@@ -367,8 +363,7 @@ func emit_events(msg):
 					"event", Event.new({"source": source, "type": evtype, "channel": long_param})
 				)
 			TOPIC:
-				emit_signal(
-					"event",
+				event.emit(
 					Event.new(
 						{
 							"source": source,
@@ -383,21 +378,19 @@ func emit_events(msg):
 			_:
 				match reply_code:
 					"433":
-						emit_signal("event", Event.new({"source": source, "type": NICK_IN_USE}))
+						event.emit(Event.new({"source": source, "type": NICK_IN_USE}))
 
 					"353":
 						var channel = msg.split(":")[1].split(" ")[4]
 						var names = long_param.split(" ")
-						emit_signal(
-							"event",
+						event.emit(
 							Event.new(
 								{"source": source, "type": NAMES, "channel": channel, "list": names}
 							)
 						)
 
 					"332":
-						emit_signal(
-							"event",
+						event.emit(
 							Event.new(
 								{
 									"source": source,
@@ -411,8 +404,7 @@ func emit_events(msg):
 
 					# Unpriviledged ERR
 					"482":
-						emit_signal(
-							"event",
+						event.emit(
 							Event.new(
 								{
 									"source": source,
@@ -431,8 +423,7 @@ func emit_events(msg):
 						accumulator.add(LIST, StringUtils.join_from(args, 3))
 
 					"323":
-						emit_signal(
-							"event",
+						event.emit(
 							Event.new(
 								{
 									"source": source,
