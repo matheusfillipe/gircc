@@ -8,3 +8,4 @@
 .mono/
 data_*/
 irc/logs/
+.godot/
